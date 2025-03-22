@@ -1,4 +1,4 @@
-package com.mustafa.weathernow
+package com.mustafa.weathernow.main_screen.view
 
 import android.annotation.SuppressLint
 import androidx.compose.material.icons.Icons
@@ -13,20 +13,13 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.mustafa.weathernow.utils.NavigationRoute
-import kotlin.reflect.KClass
 
 
 private fun getBottomNavigationList(): List<NavigationItem> {
