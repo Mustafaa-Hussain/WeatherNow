@@ -1,5 +1,7 @@
 package com.mustafa.weathernow.main_screen.view
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -8,6 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -28,11 +34,15 @@ fun MainScreen() {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(title = { Text(text = stringResource(R.string.app_name)) })
-        },
         bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
+        Image(
+            painter = painterResource(R.drawable.app_background),
+            contentDescription = stringResource(R.string.app_background),
+            modifier = Modifier
+                .fillMaxSize(),
+            contentScale = ContentScale.FillBounds
+        )
         BottomNavGraph(
             navController = navController,
             modifier = Modifier.padding(innerPadding)
@@ -47,6 +57,7 @@ fun BottomNavGraph(
     modifier: Modifier = Modifier
 ) {
     NavHost(
+        modifier = modifier,
         navController = navController,
         startDestination = NavigationRoute.HomeScreen
     ) {
