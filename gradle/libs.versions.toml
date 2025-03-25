@@ -1,8 +1,11 @@
 [versions]
 accompanistDrawablepainter = "0.35.0-alpha"
 agp = "8.9.0"
+chartsAndroid = "2.0.0"
+compose = "1.0.0-beta01"
 converterGson = "2.11.0"
 coreSplashscreen = "1.0.1"
+fragmentKtx = "1.8.6"
 gson = "2.12.1"
 kotlin = "2.0.21"
 coreKtx = "1.15.0"
@@ -20,12 +23,17 @@ roomCompiler = "2.6.1"
 
 [libraries]
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistDrawablepainter" }
+androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activityCompose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
+androidx-lifecycle-viewmodel-compose-android = { module = "androidx.lifecycle:lifecycle-viewmodel-compose-android", version.ref = "lifecycleRuntimeKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
+charts-android = { module = "io.github.dautovicharis:charts-android", version.ref = "chartsAndroid" }
+compose = { module = "com.github.bumptech.glide:compose", version.ref = "compose" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
