@@ -1,7 +1,7 @@
 package com.mustafa.weathernow.data
 
 import com.mustafa.weathernow.data.pojos.OneResponse
-import com.mustafa.weathernow.data.remote.WeatherRemoteDatasource
+import com.mustafa.weathernow.data.sources.remote.WeatherRemoteDatasource
 import kotlinx.coroutines.flow.Flow
 
 class WeatherRepository(

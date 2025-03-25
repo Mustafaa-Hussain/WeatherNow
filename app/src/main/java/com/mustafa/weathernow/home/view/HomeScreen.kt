@@ -510,9 +510,29 @@ fun DailyColumItem(dayData: DailyItem?) {
 @Composable
 
 fun NextDayExtraData(dayData: DailyItem) {
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Spacer(
+            Modifier
+                .padding(horizontal = 36.dp, vertical = 8.dp)
+                .height(1.dp)
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    shape = MaterialTheme.shapes.medium
+                )
+        )
+
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -521,6 +541,18 @@ fun NextDayExtraData(dayData: DailyItem) {
             )
             Text(text = stringResource(R.string.sunrise))
             Text(text = dayData.sunrise.timeFormater())
+
+            Spacer(
+                Modifier
+                    .padding(4.dp)
+                    .width(1.dp)
+                    .height(20.dp)
+                    .background(
+                        MaterialTheme.colorScheme.onPrimary,
+                        shape = MaterialTheme.shapes.medium
+                    )
+            )
+
             Icon(
                 painter = painterResource(R.drawable.sunset_icon),
                 contentDescription = stringResource(R.string.sunset)
@@ -528,16 +560,78 @@ fun NextDayExtraData(dayData: DailyItem) {
             Text(text = stringResource(R.string.sunset))
             Text(text = dayData.sunset.timeFormater())
         }
+
         Row(
+            Modifier.padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Text(text = "${dayData.humidity.format()} %")
             Icon(
                 modifier = Modifier.size(24.dp),
                 painter = painterResource(R.drawable.hum_icon),
-                contentDescription = "humidity",
+                contentDescription = stringResource(R.string.humidity),
                 tint = Color.White
             )
+            Text(text = "${dayData.humidity.format()} %")
+
+            Spacer(
+                Modifier
+                    .padding(4.dp)
+                    .width(1.dp)
+                    .height(20.dp)
+                    .background(
+                        MaterialTheme.colorScheme.onPrimary,
+                        shape = MaterialTheme.shapes.medium
+                    )
+            )
+
+            Icon(
+                modifier = Modifier.size(24.dp),
+                painter = painterResource(R.drawable.windy_icon),
+                contentDescription = stringResource(R.string.wind_speed),
+                tint = Color.White
+            )
+            Text(text = "${dayData.windSpeed.format()} " + stringResource(R.string.km_h))
+
+            Spacer(
+                Modifier
+                    .padding(4.dp)
+                    .width(1.dp)
+                    .height(20.dp)
+                    .background(
+                        MaterialTheme.colorScheme.onPrimary,
+                        shape = MaterialTheme.shapes.medium
+                    )
+            )
+
+            Icon(
+                modifier = Modifier.size(24.dp),
+                painter = painterResource(R.drawable.pressure_icon),
+                contentDescription = stringResource(R.string.pressure),
+                tint = Color.White
+            )
+            Text(text = "${dayData.pressure.format()} " + stringResource(R.string.hpa))
+
+            Spacer(
+                Modifier
+                    .padding(4.dp)
+                    .width(1.dp)
+                    .height(20.dp)
+                    .background(
+                        MaterialTheme.colorScheme.onPrimary,
+                        shape = MaterialTheme.shapes.medium
+                    )
+            )
+
+            Icon(
+                modifier = Modifier.size(24.dp),
+                painter = painterResource(R.drawable.clouds_icon),
+                contentDescription = stringResource(R.string.clouds),
+                tint = Color.White
+            )
+            Text(text = "${dayData.clouds.format()} %")
+
+
         }
     }
 }

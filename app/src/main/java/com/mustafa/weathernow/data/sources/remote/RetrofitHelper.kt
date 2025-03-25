@@ -1,4 +1,4 @@
-package com.mustafa.weathernow.data.remote
+package com.mustafa.weathernow.data.sources.remote
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

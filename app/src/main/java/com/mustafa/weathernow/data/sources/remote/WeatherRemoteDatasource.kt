@@ -1,4 +1,4 @@
-package com.mustafa.weathernow.data.remote
+package com.mustafa.weathernow.data.sources.remote
 
 import com.mustafa.weathernow.data.pojos.OneResponse
 import kotlinx.coroutines.flow.Flow

@@ -19,7 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.aleart.view.WeatherAlertsScreen
 import com.mustafa.weathernow.data.WeatherRepository
-import com.mustafa.weathernow.data.remote.WeatherRemoteDatasource
+import com.mustafa.weathernow.data.sources.remote.WeatherRemoteDatasource
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
