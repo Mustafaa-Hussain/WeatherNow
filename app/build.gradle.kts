@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.konan.properties.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,11 +7,17 @@ plugins {
 
     //plugins
     kotlin("plugin.serialization") version "2.1.10"
+
+    id("com.google.devtools.ksp")
 }
 
 android {
     namespace = "com.mustafa.weathernow"
     compileSdk = 35
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "com.mustafa.weathernow"
@@ -19,6 +27,20 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        //load the values from .properties file
+        val keystoreFile = project.rootProject.file("local.properties")
+        val properties = Properties()
+        properties.load(keystoreFile.inputStream())
+
+        //return empty key in case something goes wrong
+        val apiKey = properties.getProperty("API_KEY") ?: ""
+
+        buildConfigField(
+            type = "String",
+            name = "API_KEY",
+            value = apiKey
+        )
     }
 
     buildTypes {
@@ -61,16 +83,32 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
 
-
-    val nav_version = "2.8.9"
-    implementation("androidx.navigation:navigation-compose:$nav_version")
+    implementation(libs.androidx.navigation.compose)
     //Serialization for NavArgs
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation(libs.kotlinx.serialization.json)
 
 
     //display gif file
-    implementation("com.google.accompanist:accompanist-drawablepainter:0.35.0-alpha")
+    implementation(libs.accompanist.drawablepainter)
 
-    implementation("androidx.core:core-splashscreen:1.0.0")
+    implementation(libs.androidx.core.splashscreen)
 
+    //retrofit
+    //noinspection UseTomlInstead,UseTomlInstead
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation(libs.converter.gson)
+    //GSON
+    implementation(libs.gson)
+
+    //room
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+
+    implementation(libs.androidx.lifecycle.viewmodel.compose.android)
+
+    //glide image
+    implementation(libs.compose)
+
+    implementation(libs.play.services.location)
 }
