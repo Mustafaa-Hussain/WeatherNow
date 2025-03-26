@@ -3,13 +3,14 @@ package com.mustafa.weathernow.home.view
 
 import android.content.Context
 import android.location.Geocoder
+import android.location.Location
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -52,7 +52,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,22 +70,23 @@ import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.timeFormater
-import java.text.NumberFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, context: Context) {
+fun HomeScreen(viewModel: HomeViewModel, location: Location?, context: Context) {
     val weatherData = viewModel.weatherResponse.collectAsStateWithLifecycle()
     val isRefreshing = rememberSaveable { mutableStateOf(true) }
     val getData = rememberSaveable { mutableStateOf(true) }
 
-    LaunchedEffect(getData.value) {
-        viewModel.getWeatherData(
-            31.2497,
-            30.0626,
-            BuildConfig.API_KEY,
-            units = "metric"
-        )
+    LaunchedEffect(location, getData.value) {
+        if (location != null) {
+            viewModel.getWeatherData(
+                location.longitude,
+                location.latitude,
+                BuildConfig.API_KEY,
+                units = "metric"
+            )
+        }
     }
 
     PullToRefreshBox(
@@ -128,7 +128,7 @@ fun ShowErrorMessage(errorMsg: String) {
 
 @Composable
 fun LoadingData(modifier: Modifier = Modifier) {
-    CircularProgressIndicator()
+//    CircularProgressIndicator()
 }
 
 @Composable
@@ -137,7 +137,7 @@ fun WeatherData(weatherData: OneResponse) {
         weatherData.lat ?: 0.0,
         weatherData.lon ?: 0.0,
         1
-    )?.first()?.locality
+    )?.first()?.subAdminArea
 
     LocationData(city ?: "")
 
@@ -517,17 +517,6 @@ fun NextDayExtraData(dayData: DailyItem) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Spacer(
-            Modifier
-                .padding(horizontal = 36.dp, vertical = 8.dp)
-                .height(1.dp)
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    shape = MaterialTheme.shapes.medium
-                )
-        )
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -561,13 +550,27 @@ fun NextDayExtraData(dayData: DailyItem) {
             Text(text = dayData.sunset.timeFormater())
         }
 
+        Spacer(
+            Modifier
+                .padding(horizontal = 36.dp, vertical = 4.dp)
+                .height(1.dp)
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    shape = MaterialTheme.shapes.medium
+                )
+        )
+
+
         Row(
-            Modifier.padding(8.dp),
+            Modifier
+                .padding(vertical = 8.dp, horizontal = 16.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Icon(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(18.dp),
                 painter = painterResource(R.drawable.hum_icon),
                 contentDescription = stringResource(R.string.humidity),
                 tint = Color.White
@@ -586,7 +589,7 @@ fun NextDayExtraData(dayData: DailyItem) {
             )
 
             Icon(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(18.dp),
                 painter = painterResource(R.drawable.windy_icon),
                 contentDescription = stringResource(R.string.wind_speed),
                 tint = Color.White
@@ -605,7 +608,7 @@ fun NextDayExtraData(dayData: DailyItem) {
             )
 
             Icon(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(18.dp),
                 painter = painterResource(R.drawable.pressure_icon),
                 contentDescription = stringResource(R.string.pressure),
                 tint = Color.White
@@ -624,13 +627,12 @@ fun NextDayExtraData(dayData: DailyItem) {
             )
 
             Icon(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(18.dp),
                 painter = painterResource(R.drawable.clouds_icon),
                 contentDescription = stringResource(R.string.clouds),
                 tint = Color.White
             )
             Text(text = "${dayData.clouds.format()} %")
-
 
         }
     }

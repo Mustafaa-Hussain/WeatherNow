@@ -25,7 +25,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.utils.NavigationRoute
+import com.mustafa.weathernow.main_screen.view.NavigationRoute
 
 
 private fun getBottomNavigationList(context: Context): List<NavigationItem> {

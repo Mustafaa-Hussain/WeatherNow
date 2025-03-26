@@ -1,5 +1,6 @@
 package com.mustafa.weathernow.main_screen.view
 
+import android.location.Location
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -24,12 +25,11 @@ import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
 import com.mustafa.weathernow.settings.view.SettingsScreen
-import com.mustafa.weathernow.utils.NavigationRoute
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(location: Location?) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -44,6 +44,7 @@ fun MainScreen() {
             contentScale = ContentScale.FillBounds
         )
         BottomNavGraph(
+            location,
             navController = navController,
             modifier = Modifier.padding(innerPadding)
         )
@@ -53,6 +54,7 @@ fun MainScreen() {
 
 @Composable
 fun BottomNavGraph(
+    location: Location?,
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
@@ -67,6 +69,7 @@ fun BottomNavGraph(
             )
             HomeScreen(
                 viewModel = viewModel(factory = factory),
+                location,
                 context = LocalContext.current
             )
         }

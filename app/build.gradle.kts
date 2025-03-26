@@ -108,4 +108,6 @@ dependencies {
 
     //glide image
     implementation(libs.compose)
+
+    implementation(libs.play.services.location)
 }

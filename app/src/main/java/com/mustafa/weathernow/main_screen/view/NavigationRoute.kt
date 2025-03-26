@@ -1,4 +1,4 @@
-package com.mustafa.weathernow.utils
+package com.mustafa.weathernow.main_screen.view
 
 import kotlinx.serialization.Serializable
 
