@@ -1,7 +1,6 @@
 package com.mustafa.weathernow.main_screen.view
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
@@ -31,9 +30,11 @@ import com.mustafa.weathernow.ui.theme.WeatherNowTheme
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
+    private val locationPermissionId = 1001
+
     private lateinit var fusedLocation: FusedLocationProviderClient
     private var location by mutableStateOf<Location?>(null)
-    private val locationPermissionId = 5005
+    private var locationPermissionGranted by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +42,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WeatherNowTheme {
-                MainScreen(location)
+                MainScreen(locationPermissionGranted, location)
                 SplashScreen()
             }
         }
@@ -59,7 +60,6 @@ class MainActivity : ComponentActivity() {
         } else {
             askForLocationPermission()
         }
-
     }
 
     private fun isLocationPermissionGranted(): Boolean {
@@ -127,6 +127,7 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -139,6 +140,10 @@ class MainActivity : ComponentActivity() {
                 && grantResults[1] == PackageManager.PERMISSION_GRANTED
             ) {
                 getCurrentLocation()
+                locationPermissionGranted = true
+            } else {
+                //send to ui the permission is denied
+                locationPermissionGranted = false
             }
         }
     }

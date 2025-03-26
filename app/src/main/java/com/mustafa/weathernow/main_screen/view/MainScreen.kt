@@ -29,7 +29,7 @@ import com.mustafa.weathernow.settings.view.SettingsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(location: Location?) {
+fun MainScreen(isLocationPermissionGranted: Boolean, location: Location?) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -44,6 +44,7 @@ fun MainScreen(location: Location?) {
             contentScale = ContentScale.FillBounds
         )
         BottomNavGraph(
+            isLocationPermissionGranted,
             location,
             navController = navController,
             modifier = Modifier.padding(innerPadding)
@@ -54,6 +55,7 @@ fun MainScreen(location: Location?) {
 
 @Composable
 fun BottomNavGraph(
+    isLocationPermissionGranted: Boolean,
     location: Location?,
     navController: NavHostController,
     modifier: Modifier = Modifier
@@ -65,12 +67,12 @@ fun BottomNavGraph(
     ) {
         composable<NavigationRoute.HomeScreen> {
             val factory = HomeViewModel.HomeViewModelFactory(
-                WeatherRepository(WeatherRemoteDatasource())
+                WeatherRepository.getInstance(WeatherRemoteDatasource())
             )
             HomeScreen(
                 viewModel = viewModel(factory = factory),
-                location,
-                context = LocalContext.current
+                isLocationPermissionGranted,
+                location
             )
         }
         composable<NavigationRoute.WeatherAlertScreen> {

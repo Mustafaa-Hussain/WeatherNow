@@ -1,6 +1,5 @@
 package com.mustafa.weathernow.home.view_model
 
-import android.text.format.DateFormat
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -11,8 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.Locale
 
 class HomeViewModel(private val repo: WeatherRepository) : ViewModel() {
 

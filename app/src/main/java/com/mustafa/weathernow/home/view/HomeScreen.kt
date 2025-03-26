@@ -4,7 +4,6 @@ package com.mustafa.weathernow.home.view
 import android.content.Context
 import android.location.Geocoder
 import android.location.Location
-import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -28,7 +27,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -73,13 +71,17 @@ import com.mustafa.weathernow.utils.timeFormater
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, location: Location?, context: Context) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    isLocationPermissionGranted: Boolean,
+    location: Location?
+) {
     val weatherData = viewModel.weatherResponse.collectAsStateWithLifecycle()
     val isRefreshing = rememberSaveable { mutableStateOf(true) }
     val getData = rememberSaveable { mutableStateOf(true) }
 
     LaunchedEffect(location, getData.value) {
-        if (location != null) {
+        if (location != null && isLocationPermissionGranted) {
             viewModel.getWeatherData(
                 location.longitude,
                 location.latitude,
