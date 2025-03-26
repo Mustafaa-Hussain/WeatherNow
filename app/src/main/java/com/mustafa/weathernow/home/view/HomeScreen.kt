@@ -4,6 +4,7 @@ package com.mustafa.weathernow.home.view
 import android.content.Context
 import android.location.Geocoder
 import android.location.Location
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -36,8 +37,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -55,7 +58,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.mustafa.weathernow.BuildConfig
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.data.ResponseState
 import com.mustafa.weathernow.data.pojos.Current
@@ -69,6 +71,9 @@ import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.timeFormater
 
+private var tempUnit  = ""
+private var windSpeedUnit = ""
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -76,26 +81,32 @@ fun HomeScreen(
     isLocationPermissionGranted: Boolean,
     location: Location?
 ) {
-    val weatherData = viewModel.weatherResponse.collectAsStateWithLifecycle()
-    val isRefreshing = rememberSaveable { mutableStateOf(true) }
-    val getData = rememberSaveable { mutableStateOf(true) }
+    val context = LocalContext.current
+    val weatherData by viewModel.weatherResponse.collectAsStateWithLifecycle()
+    var isRefreshing by rememberSaveable { mutableStateOf(true) }
+    var getData by rememberSaveable { mutableStateOf(true) }
+    var isDataDisplayed by rememberSaveable { mutableStateOf(false) }
+    var unit by rememberSaveable { mutableStateOf("metric") }
+    var lang by rememberSaveable { mutableStateOf("en") }
+    //todo get unit and lang from saved settings
+    tempUnit = stringResource(R.string.degrees_c)
+    windSpeedUnit = stringResource(R.string.km_h)
 
-    LaunchedEffect(location, getData.value) {
-        if (location != null && isLocationPermissionGranted) {
-            viewModel.getWeatherData(
-                location.longitude,
-                location.latitude,
-                BuildConfig.API_KEY,
-                units = "metric"
-            )
-        }
+    LaunchedEffect(location, getData) {
+        viewModel.getWeatherData(
+            location?.longitude,
+            location?.latitude,
+            lang = lang,
+            units = unit
+        )
     }
 
+
     PullToRefreshBox(
-        isRefreshing = isRefreshing.value,
+        isRefreshing = isRefreshing,
         onRefresh = {
-            isRefreshing.value = true
-            getData.value = !getData.value
+            isRefreshing = true
+            getData = !getData
         }
     ) {
         Column(
@@ -104,23 +115,36 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            when (weatherData.value) {
+            when (weatherData) {
                 is ResponseState.Failure -> {
-                    val errorMsg = (weatherData.value as ResponseState.Failure).errorMessage
-                    ShowErrorMessage(errorMsg)
-                    isRefreshing.value = false
+                    isRefreshing = false
+                    if (!isDataDisplayed) {
+                        val errorMsg = (weatherData as ResponseState.Failure).errorMessage
+                        ShowErrorMessage(errorMsg)
+                    }
                 }
 
-                is ResponseState.Loading -> LoadingData()
+                ResponseState.Loading -> LoadingData()
 
                 is ResponseState.Success -> {
-                    val weatherData = (weatherData.value as ResponseState.Success).response
+                    isRefreshing = false
+                    isDataDisplayed = true
+                    val weatherData = (weatherData as ResponseState.Success).response
                     WeatherData(weatherData)
-                    isRefreshing.value = false
                 }
             }
         }
     }
+
+
+    // in case first time user open the app and there is no location
+    if (!isLocationPermissionGranted && !isDataDisplayed) {
+        //todo navigate to search by city name screen
+        //test message
+        Toast.makeText(context, "Please enable location", Toast.LENGTH_SHORT)
+            .show()
+    }
+
 }
 
 @Composable
@@ -135,13 +159,14 @@ fun LoadingData(modifier: Modifier = Modifier) {
 
 @Composable
 fun WeatherData(weatherData: OneResponse) {
+
     val city = Geocoder(LocalContext.current).getFromLocation(
         weatherData.lat ?: 0.0,
         weatherData.lon ?: 0.0,
         1
-    )?.first()?.subAdminArea
+    ).let { if (!it.isNullOrEmpty()) it.first().subAdminArea else "" }
 
-    LocationData(city ?: "")
+    LocationData(city)
 
     TodayWeatherData(
         weatherData.current,
@@ -226,7 +251,7 @@ fun TodayWeatherData(currentData: Current?, context: Context) {
                                 fontSize = 128.sp
                             )
                             Text(
-                                text = stringResource(R.string.degrees_c),//todo get this from saved settings
+                                text = tempUnit,
                                 fontSize = 24.sp,
                                 modifier = Modifier.padding(top = 16.dp)
                             )
@@ -270,7 +295,7 @@ fun TodayWeatherData(currentData: Current?, context: Context) {
                     Text(
                         text = currentData.feelsLike?.toInt().format()
                     )
-                    Text(text = stringResource(R.string.degrees_c))//todo get unit from setting file
+                    Text(text = tempUnit)
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -314,7 +339,7 @@ fun TodayExtraInfo(currentData: Current) {
             painter = painterResource(R.drawable.windy_icon),
             title = stringResource(R.string.wind_speed),
             value = "${currentData.windSpeed.format()} " +
-                    stringResource(R.string.km_h)//todo get this type from setting file
+                    windSpeedUnit
         )
         TodayExtraInfoItem(
             modifier = Modifier.weight(1f),
@@ -404,7 +429,7 @@ fun HourlyRowItem(hourlyItem: HourlyItem?) {
                 Text(
                     text = "${
                         hourlyItem.temp?.toInt().format()
-                    } " + stringResource(R.string.degrees_c),
+                    } " + tempUnit,
                     textAlign = TextAlign.Center
                 )
                 Text(
@@ -420,12 +445,23 @@ fun HourlyRowItem(hourlyItem: HourlyItem?) {
 @Composable
 fun NextDaysData(dailyData: List<DailyItem?>?) {
     if (!dailyData.isNullOrEmpty()) {
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                textAlign = TextAlign.Start,
+                style = MaterialTheme.typography.titleLarge,
+                text = stringResource(R.string.next_7_days),
+            )
+
             dailyData.forEachIndexed { index, it ->
                 if (index != 0)
                     DailyColumItem(it)
@@ -488,9 +524,7 @@ fun DailyColumItem(dayData: DailyItem?) {
                     modifier = Modifier.weight(1f),
                     text = "${dayData.temp?.max?.toInt().format()} / ${
                         dayData.temp?.min?.toInt().format()
-                    }" + stringResource(
-                        R.string.degrees_c
-                    )
+                    }" + tempUnit
                 )
                 IconButton(
                     onClick = { isOpened.value = !isOpened.value },
@@ -596,7 +630,7 @@ fun NextDayExtraData(dayData: DailyItem) {
                 contentDescription = stringResource(R.string.wind_speed),
                 tint = Color.White
             )
-            Text(text = "${dayData.windSpeed.format()} " + stringResource(R.string.km_h))
+            Text(text = "${dayData.windSpeed.format()} " + windSpeedUnit)
 
             Spacer(
                 Modifier

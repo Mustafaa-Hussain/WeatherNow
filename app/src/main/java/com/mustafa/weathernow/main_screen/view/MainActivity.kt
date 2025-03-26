@@ -80,6 +80,10 @@ class MainActivity : ComponentActivity() {
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun getCurrentLocation() {
+        if (!isLocationEnabled()) {
+            askToEnableLocation()
+            return
+        }
         fusedLocation = LocationServices.getFusedLocationProviderClient(this)
 
         val locationRequest = LocationRequest.Builder(0).apply {
@@ -108,15 +112,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun askForLocationPermission() {
-        ActivityCompat.shouldShowRequestPermissionRationale(
-            this,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        ActivityCompat.shouldShowRequestPermissionRationale(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
-
         ActivityCompat.requestPermissions(
             this,
             arrayOf(

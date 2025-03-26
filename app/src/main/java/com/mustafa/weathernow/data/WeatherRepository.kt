@@ -1,41 +1,66 @@
 package com.mustafa.weathernow.data
 
-import android.util.Log
 import com.mustafa.weathernow.data.pojos.OneResponse
+import com.mustafa.weathernow.data.sources.local.WeatherLocalDatasource
 import com.mustafa.weathernow.data.sources.remote.WeatherRemoteDatasource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 class WeatherRepository private constructor(
+    private val localDataSource: WeatherLocalDatasource,
     private val remoteDatasource: WeatherRemoteDatasource
-) {
+) : IWeatherRepository {
 
-    suspend fun getAllWeatherData(
-        longitude: Double,
-        latitude: Double,
+    override suspend fun getAllWeatherData(
+        longitude: Double?,
+        latitude: Double?,
         apikey: String,
-        exclude: String = "minutely",
-        units: String = "standard",
-        lang: String = "en"
+        exclude: String,
+        units: String,
+        lang: String
     ): Flow<OneResponse> {
-        return remoteDatasource.getAllWeatherData(
-            longitude,
-            latitude,
-            apikey,
-            exclude,
-            units,
-            lang
-        )
+
+        return flow {
+            val localResult = localDataSource.getAllWeatherData()
+            if (localResult != null)
+                emit(localResult)
+
+            if (longitude != null && latitude != null) {
+                val remoteResult =
+                    remoteDatasource.getAllWeatherData(
+                        longitude,
+                        latitude,
+                        apikey,
+                        exclude,
+                        units,
+                        lang
+                    )
+                insertWeatherData(remoteResult)
+
+                emit(remoteResult)
+            }
+        }
+
     }
 
+
+    override suspend fun insertWeatherData(
+        weatherData: OneResponse
+    ): Long {
+        return localDataSource.insertWeatherData(weatherData)
+    }
 
     companion object {
         @Volatile
         private var instance: WeatherRepository? = null
 
 
-        fun getInstance(remoteDatasource: WeatherRemoteDatasource): WeatherRepository {
+        fun getInstance(
+            localDataSource: WeatherLocalDatasource,
+            remoteDatasource: WeatherRemoteDatasource
+        ): WeatherRepository {
             return instance ?: synchronized(this) {
-                val tempInstance = WeatherRepository(remoteDatasource)
+                val tempInstance = WeatherRepository(localDataSource, remoteDatasource)
                 instance = tempInstance
                 tempInstance
             }

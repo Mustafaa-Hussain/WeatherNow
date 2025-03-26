@@ -1,8 +1,13 @@
 package com.mustafa.weathernow.data.pojos
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
+@Entity(tableName = "weather_data")
 data class OneResponse(
+    @PrimaryKey
+    val id: Int = 0,
     val alerts: List<AlertsItem?>? = null,
     val current: Current? = null,
     val timezone: String? = null,

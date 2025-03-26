@@ -20,7 +20,10 @@ import androidx.navigation.compose.rememberNavController
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.aleart.view.WeatherAlertsScreen
 import com.mustafa.weathernow.data.WeatherRepository
-import com.mustafa.weathernow.data.sources.remote.WeatherRemoteDatasource
+import com.mustafa.weathernow.data.sources.local.WeatherDatabase
+import com.mustafa.weathernow.data.sources.local.WeatherLocalDatasourceImpl
+import com.mustafa.weathernow.data.sources.remote.RetrofitHelper
+import com.mustafa.weathernow.data.sources.remote.WeatherRemoteDatasourceImpl
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
@@ -67,7 +70,12 @@ fun BottomNavGraph(
     ) {
         composable<NavigationRoute.HomeScreen> {
             val factory = HomeViewModel.HomeViewModelFactory(
-                WeatherRepository.getInstance(WeatherRemoteDatasource())
+                WeatherRepository.getInstance(
+                    WeatherLocalDatasourceImpl(
+                        WeatherDatabase.getInstance(LocalContext.current).getLocationDao()
+                    ),
+                    WeatherRemoteDatasourceImpl(RetrofitHelper.retrofitService)
+                )
             )
             HomeScreen(
                 viewModel = viewModel(factory = factory),
