@@ -89,8 +89,8 @@ fun HomeScreen(
     var unit by rememberSaveable { mutableStateOf("metric") }
     var lang by rememberSaveable { mutableStateOf("en") }
     //todo get unit and lang from saved settings
-    tempUnit = stringResource(R.string.degrees_c)
-    windSpeedUnit = stringResource(R.string.km_h)
+    tempUnit = stringResource(R.string.degree_c)
+    windSpeedUnit = stringResource(R.string.meter_sec)
 
     LaunchedEffect(location, getData) {
         viewModel.getWeatherData(
