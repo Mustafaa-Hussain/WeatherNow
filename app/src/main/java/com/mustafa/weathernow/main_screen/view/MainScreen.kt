@@ -30,14 +30,20 @@ import com.mustafa.weathernow.data.sources.shared_prefs.SettingsLocalDatasource
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
+import com.mustafa.weathernow.map.view.MapScreen
 import com.mustafa.weathernow.settings.view.SettingsScreen
 import com.mustafa.weathernow.settings.view_model.SettingsViewModel
 import com.mustafa.weathernow.utils.FileNames
+import com.mustafa.weathernow.utils.NavigationRoute
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(isLocationPermissionGranted: Boolean, location: Location?) {
+fun MainScreen(
+    isLocationPermissionGranted: Boolean,
+    location: Location?,
+    askForLocationPermission: () -> Unit
+) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -55,7 +61,8 @@ fun MainScreen(isLocationPermissionGranted: Boolean, location: Location?) {
             isLocationPermissionGranted,
             location,
             navController = navController,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            askForLocationPermission
         )
     }
 }
@@ -66,7 +73,8 @@ fun BottomNavGraph(
     isLocationPermissionGranted: Boolean,
     location: Location?,
     navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    askForLocationPermission: () -> Unit
 ) {
     NavHost(
         modifier = modifier,
@@ -91,6 +99,7 @@ fun BottomNavGraph(
                 )
             )
             HomeScreen(
+                navController,
                 viewModel = viewModel(factory = factory),
                 isLocationPermissionGranted,
                 location
@@ -104,6 +113,7 @@ fun BottomNavGraph(
         }
         composable<NavigationRoute.SettingScreen> {
             SettingsScreen(
+                navController,
                 viewModel(
                     factory = SettingsViewModel.SettingViewModelFactory(
                         SettingsRepository.getInstance(
@@ -115,7 +125,25 @@ fun BottomNavGraph(
                             )
                         )
                     )
+                ),
+                askForLocationPermission
+            )
+        }
+        composable<NavigationRoute.MapLocationFinderScreen> {
+            val factory = SettingsViewModel.SettingViewModelFactory(
+                SettingsRepository.getInstance(
+                    SettingsLocalDatasource(
+                        LocalContext.current.getSharedPreferences(
+                            FileNames.SETTINGS_FILE_NAME,
+                            Context.MODE_PRIVATE
+                        )
+                    )
                 )
+            )
+
+            MapScreen(
+                navController,
+                viewModel(factory = factory)
             )
         }
     }

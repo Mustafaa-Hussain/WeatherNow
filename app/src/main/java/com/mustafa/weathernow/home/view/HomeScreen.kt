@@ -4,7 +4,6 @@ package com.mustafa.weathernow.home.view
 import android.content.Context
 import android.location.Geocoder
 import android.location.Location
-import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -56,6 +55,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.mustafa.weathernow.R
@@ -65,6 +65,7 @@ import com.mustafa.weathernow.data.pojos.DailyItem
 import com.mustafa.weathernow.data.pojos.HourlyItem
 import com.mustafa.weathernow.data.pojos.OneResponse
 import com.mustafa.weathernow.home.view_model.HomeViewModel
+import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.WeatherImage
 import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
@@ -78,11 +79,11 @@ private var windSpeedUnit = ""
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    navController: NavController,
     viewModel: HomeViewModel,
     isLocationPermissionGranted: Boolean,
     location: Location?
 ) {
-    val context = LocalContext.current
     val weatherData by viewModel.weatherResponse.collectAsStateWithLifecycle()
     var isRefreshing by rememberSaveable { mutableStateOf(true) }
     var getData by rememberSaveable { mutableStateOf(true) }
@@ -91,6 +92,10 @@ fun HomeScreen(
     viewModel.getSavedSettings()
     val measurementSystem = viewModel.measurementSystem.collectAsStateWithLifecycle()
     val language = viewModel.language.collectAsStateWithLifecycle()
+    val locationFinder = viewModel.locationFinder.collectAsStateWithLifecycle()
+    val savedLatitude = viewModel.savedLatitude.collectAsStateWithLifecycle()
+    val savedLongitude = viewModel.savedLongitude.collectAsStateWithLifecycle()
+
 
     when (measurementSystem.value) {
         "imperial" -> {
@@ -110,18 +115,27 @@ fun HomeScreen(
     }
 
     LaunchedEffect(location, getData) {
-        if (language.value == "device_lang") {
-            viewModel.getWeatherData(
-                location?.longitude,
-                location?.latitude,
-                lang = Locale.getDefault().language
+        if (locationFinder.value == "GPS") {
+            getWeatherData(
+                language.value,
+                viewModel,
+                location?.longitude ?: savedLongitude.value.toDouble(),
+                location?.latitude ?: savedLatitude.value.toDouble()
             )
         } else {
-            viewModel.getWeatherData(
-                location?.longitude,
-                location?.latitude,
+            getWeatherData(
+                language.value,
+                viewModel,
+                savedLongitude.value.toDouble(),
+                savedLatitude.value.toDouble()
             )
         }
+    }
+
+    // in case first time user open the app and there is no location permission
+    val isDefaultLocation = savedLatitude.value == 0.0f && savedLongitude.value == 0.0f
+    if (!isLocationPermissionGranted && isDefaultLocation) {
+        navController.navigate(NavigationRoute.MapLocationFinderScreen)
     }
 
 
@@ -158,16 +172,26 @@ fun HomeScreen(
             }
         }
     }
+}
 
-
-    // in case first time user open the app and there is no location
-    if (!isLocationPermissionGranted && !isDataDisplayed) {
-        //todo navigate to search by city name screen
-        //test message
-        Toast.makeText(context, "Please enable location", Toast.LENGTH_SHORT)
-            .show()
+private fun getWeatherData(
+    language: String,
+    viewModel: HomeViewModel,
+    longitude: Double,
+    latitude: Double
+) {
+    if (language == "device_lang") {
+        viewModel.getWeatherData(
+            longitude,
+            latitude,
+            lang = Locale.getDefault().language
+        )
+    } else {
+        viewModel.getWeatherData(
+            longitude,
+            latitude
+        )
     }
-
 }
 
 @Composable

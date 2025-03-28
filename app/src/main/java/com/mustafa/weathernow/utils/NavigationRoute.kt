@@ -1,4 +1,4 @@
-package com.mustafa.weathernow.main_screen.view
+package com.mustafa.weathernow.utils
 
 import kotlinx.serialization.Serializable
 
@@ -15,4 +15,7 @@ sealed class NavigationRoute() {
 
     @Serializable
     object SettingScreen : NavigationRoute()
+
+    @Serializable
+    object MapLocationFinderScreen : NavigationRoute()
 }

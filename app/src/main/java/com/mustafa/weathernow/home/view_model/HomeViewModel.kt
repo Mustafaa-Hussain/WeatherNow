@@ -26,6 +26,16 @@ class HomeViewModel(
     private val _language = MutableStateFlow("")
     val language = _language.asStateFlow()
 
+    private val _locationFinder = MutableStateFlow("")
+    val locationFinder = _locationFinder.asStateFlow()
+
+    private val _savedLatitude = MutableStateFlow(0f)
+    val savedLatitude = _savedLatitude.asStateFlow()
+
+    private val _savedLongitude = MutableStateFlow(0f)
+    val savedLongitude = _savedLongitude.asStateFlow()
+
+
     fun getWeatherData(
         longitude: Double?,
         latitude: Double?,
@@ -55,6 +65,8 @@ class HomeViewModel(
     fun getSavedSettings() {
         getMeasurementSystem()
         getLanguage()
+        getLocationFinder()
+        getSavedLocation()
     }
 
     private fun getMeasurementSystem() {
@@ -63,6 +75,16 @@ class HomeViewModel(
 
     private fun getLanguage() {
         _language.value = settingRepository.getLanguage()
+    }
+
+    private fun getLocationFinder() {
+        _locationFinder.value = settingRepository.getLocationFinder()
+    }
+
+
+    private fun getSavedLocation() {
+        _savedLatitude.value = settingRepository.getLatitude()
+        _savedLongitude.value = settingRepository.getLongitude()
     }
 
     @Suppress("UNCHECKED_CAST")

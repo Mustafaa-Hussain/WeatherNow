@@ -40,12 +40,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.settings.view_model.SettingsViewModel
-import java.util.Locale
+import com.mustafa.weathernow.utils.LocationFinder
+import com.mustafa.weathernow.utils.NavigationRoute
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel) {
+fun SettingsScreen(
+    navController: NavController,
+    viewModel: SettingsViewModel,
+    askForLocationPermission: () -> Unit
+) {
     val location = viewModel.locationFinder.collectAsStateWithLifecycle()
     val language = viewModel.language.collectAsStateWithLifecycle()
     val measurementSystem = viewModel.measurementSystem.collectAsStateWithLifecycle()
@@ -57,7 +63,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             .padding(16.dp),
     )
     {
-        LocationFinder(viewModel, location.value)
+        LocationFinder(navController, viewModel, location.value, askForLocationPermission)
         Language(viewModel, language.value)
         MeasurementsUnits(viewModel, measurementSystem.value)
     }
@@ -65,7 +71,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
 
 @Composable
-fun LocationFinder(viewModel: SettingsViewModel, location: String) {
+fun LocationFinder(
+    navController: NavController,
+    viewModel: SettingsViewModel,
+    location: String,
+    askForLocationPermission: () -> Unit
+) {
     val settingOptions = listOf("GPS", "Map")
     val radioOptions = listOf(stringResource(R.string.gps), stringResource(R.string.map))
     val (selectedOption, onOptionSelected) = remember { mutableStateOf(radioOptions[0]) }
@@ -124,6 +135,12 @@ fun LocationFinder(viewModel: SettingsViewModel, location: String) {
                                     settingOptions[radioOptions.indexOf(text)]
                                 )
                                 onOptionSelected(text)
+                                if (text == radioOptions[radioOptions.lastIndex]) {
+                                    //navigate to map screen
+                                    navController.navigate(NavigationRoute.MapLocationFinderScreen)
+                                } else {
+                                    askForLocationPermission
+                                }
                             },
                             role = Role.RadioButton
                         ),
