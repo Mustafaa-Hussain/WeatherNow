@@ -1,11 +1,15 @@
 package com.mustafa.weathernow.settings.view
 
-import androidx.compose.animation.expandHorizontally
+import android.app.LocaleManager
+import android.content.Context
+import android.os.Build
+import android.os.LocaleList
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,37 +26,55 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mustafa.weathernow.R
+import com.mustafa.weathernow.settings.view_model.SettingsViewModel
+import java.util.Locale
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(viewModel: SettingsViewModel) {
+    val location = viewModel.locationFinder.collectAsStateWithLifecycle()
+    val language = viewModel.language.collectAsStateWithLifecycle()
+    val measurementSystem = viewModel.measurementSystem.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) { viewModel.getSettings() }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
     )
     {
-        LocationFinder()
-        Language()
-        MeasurementsUnits()
+        LocationFinder(viewModel, location.value)
+        Language(viewModel, language.value)
+        MeasurementsUnits(viewModel, measurementSystem.value)
     }
 }
 
 
 @Composable
-fun LocationFinder() {
+fun LocationFinder(viewModel: SettingsViewModel, location: String) {
+    val settingOptions = listOf("GPS", "Map")
     val radioOptions = listOf(stringResource(R.string.gps), stringResource(R.string.map))
     val (selectedOption, onOptionSelected) = remember { mutableStateOf(radioOptions[0]) }
+
+    LaunchedEffect(location) {
+        if (location.isNotEmpty())
+            onOptionSelected(radioOptions[settingOptions.indexOf(location)])
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -97,7 +119,12 @@ fun LocationFinder() {
                         .padding(16.dp)
                         .selectable(
                             selected = (text == selectedOption),
-                            onClick = { onOptionSelected(text) },
+                            onClick = {
+                                viewModel.saveLocationFinder(
+                                    settingOptions[radioOptions.indexOf(text)]
+                                )
+                                onOptionSelected(text)
+                            },
                             role = Role.RadioButton
                         ),
                     verticalAlignment = Alignment.CenterVertically
@@ -110,6 +137,7 @@ fun LocationFinder() {
                             unselectedColor = MaterialTheme.colorScheme.onPrimary
                         )
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(text = text)
                 }
             }
@@ -118,16 +146,31 @@ fun LocationFinder() {
     }
 }
 
-
 @Composable
-fun Language() {
+fun Language(viewModel: SettingsViewModel, language: String) {
+    val context = LocalContext.current
+
+    val settingOptions = listOf("en", "ar", "device_lang")
     val radioOptions =
         listOf(
             stringResource(R.string.english),
             stringResource(R.string.arabic),
-            stringResource(R.string.default_lang)
+            stringResource(R.string.device_lang)
         )
     val (selectedOption, onOptionSelected) = remember { mutableStateOf(radioOptions[0]) }
+
+
+    LaunchedEffect(language) {
+        if (language.isNotEmpty()) {
+            onOptionSelected(radioOptions[settingOptions.indexOf(language)])
+            if (language != settingOptions.last()) {
+                updateAppLocale(context, language)
+            } else {
+                resetAppLocale(context)
+            }
+        }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -164,7 +207,8 @@ fun Language() {
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             radioOptions.forEach { text ->
                 Row(
@@ -172,7 +216,12 @@ fun Language() {
                         .padding(16.dp)
                         .selectable(
                             selected = (text == selectedOption),
-                            onClick = { onOptionSelected(text) },
+                            onClick = {
+                                viewModel.saveAppLanguage(
+                                    settingOptions[radioOptions.indexOf(text)]
+                                )
+                                onOptionSelected(text)
+                            },
                             role = Role.RadioButton
                         ),
                     verticalAlignment = Alignment.CenterVertically
@@ -185,6 +234,7 @@ fun Language() {
                             unselectedColor = MaterialTheme.colorScheme.onPrimary
                         )
                     )
+
                     Text(text = text)
                 }
             }
@@ -192,9 +242,40 @@ fun Language() {
     }
 }
 
+private fun updateAppLocale(context: Context, language: String) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        context.getSystemService(LocaleManager::class.java)
+            .applicationLocales = LocaleList.forLanguageTags(language)
+    } else {
+        AppCompatDelegate.setApplicationLocales(
+            LocaleListCompat.forLanguageTags(
+                language
+            )
+        )
+    }
+}
+
+
+private fun resetAppLocale(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        context.getSystemService(LocaleManager::class.java)
+            .applicationLocales = LocaleList.getEmptyLocaleList()
+    } else {
+        AppCompatDelegate.setApplicationLocales(
+            LocaleListCompat.getEmptyLocaleList()
+        )
+    }
+}
+
 @Composable
-fun MeasurementsUnits() {
-    val radioOptions = listOf("Default system", "Imperial system", "Metric system")
+fun MeasurementsUnits(viewModel: SettingsViewModel, measurementSystem: String) {
+    val settingOptions = listOf("default", "imperial", "metric")
+
+    val radioOptions = listOf(
+        stringResource(R.string._default),
+        stringResource(R.string.imperial),
+        stringResource(R.string.metric)
+    )
     val optionTempUnitsInfo = listOf(
         stringResource(R.string.degree_k),
         stringResource(R.string.degree_f),
@@ -206,6 +287,12 @@ fun MeasurementsUnits() {
         stringResource(R.string.meter_sec)
     )
     val (selectedOption, onOptionSelected) = remember { mutableStateOf(radioOptions[0]) }
+
+
+    LaunchedEffect(measurementSystem) {
+        if (measurementSystem.isNotEmpty())
+            onOptionSelected(radioOptions[settingOptions.indexOf(measurementSystem)])
+    }
 
     Card(
         modifier = Modifier
@@ -223,7 +310,7 @@ fun MeasurementsUnits() {
                 contentDescription = stringResource(R.string.location)
             )
             Text(
-                text = "Measurements Units",
+                text = stringResource(R.string.measurements_units),
                 Modifier.padding(8.dp),
                 fontSize = 24.sp
             )
@@ -249,7 +336,12 @@ fun MeasurementsUnits() {
                         .padding(16.dp)
                         .selectable(
                             selected = (text == selectedOption),
-                            onClick = { onOptionSelected(text) },
+                            onClick = {
+                                viewModel.saveMeasurementSystem(
+                                    settingOptions[radioOptions.indexOf(text)]
+                                )
+                                onOptionSelected(text)
+                            },
                             role = Role.RadioButton
                         ),
                     verticalAlignment = Alignment.CenterVertically
@@ -277,14 +369,14 @@ fun MeasurementsUnits() {
                             fontSize = MaterialTheme.typography.titleMedium.fontSize
                         )
                         Text(
-                            text = "Temperature Unit: ${
+                            text = "${stringResource(R.string.temperature_unit)}: ${
                                 optionTempUnitsInfo[
                                     radioOptions.indexOf(text)
                                 ]
                             }"
                         )
                         Text(
-                            text = "Wind speed Unit: ${
+                            text = "${stringResource(R.string.wind_speed_unit)}: ${
                                 optionWindSpeedUnitsInfo[
                                     radioOptions.indexOf(text)
                                 ]

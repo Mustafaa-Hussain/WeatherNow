@@ -1,4 +1,4 @@
-package com.mustafa.weathernow.data
+package com.mustafa.weathernow.data.repos.weather
 
 import com.mustafa.weathernow.data.pojos.OneResponse
 import kotlinx.coroutines.flow.Flow
@@ -14,5 +14,5 @@ interface IWeatherRepository {
     ): Flow<OneResponse>
 
 
-    suspend fun insertWeatherData(weatherData: OneResponse):Long
+    suspend fun insertWeatherData(weatherData: OneResponse): Long
 }

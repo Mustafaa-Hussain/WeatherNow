@@ -1,8 +1,9 @@
-package com.mustafa.weathernow.data
+package com.mustafa.weathernow.data.repos.weather
 
 import com.mustafa.weathernow.data.pojos.OneResponse
 import com.mustafa.weathernow.data.sources.local.WeatherLocalDatasource
 import com.mustafa.weathernow.data.sources.remote.WeatherRemoteDatasource
+import com.mustafa.weathernow.data.sources.shared_prefs.SettingsLocalDatasource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -60,7 +61,10 @@ class WeatherRepository private constructor(
             remoteDatasource: WeatherRemoteDatasource
         ): WeatherRepository {
             return instance ?: synchronized(this) {
-                val tempInstance = WeatherRepository(localDataSource, remoteDatasource)
+                val tempInstance = WeatherRepository(
+                    localDataSource,
+                    remoteDatasource
+                )
                 instance = tempInstance
                 tempInstance
             }

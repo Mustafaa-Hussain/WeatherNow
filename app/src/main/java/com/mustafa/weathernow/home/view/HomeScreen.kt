@@ -59,7 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.data.ResponseState
+import com.mustafa.weathernow.home.view_model.ResponseState
 import com.mustafa.weathernow.data.pojos.Current
 import com.mustafa.weathernow.data.pojos.DailyItem
 import com.mustafa.weathernow.data.pojos.HourlyItem
@@ -70,8 +70,9 @@ import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.timeFormater
+import java.util.Locale
 
-private var tempUnit  = ""
+private var tempUnit = ""
 private var windSpeedUnit = ""
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,19 +87,41 @@ fun HomeScreen(
     var isRefreshing by rememberSaveable { mutableStateOf(true) }
     var getData by rememberSaveable { mutableStateOf(true) }
     var isDataDisplayed by rememberSaveable { mutableStateOf(false) }
-    var unit by rememberSaveable { mutableStateOf("metric") }
-    var lang by rememberSaveable { mutableStateOf("en") }
-    //todo get unit and lang from saved settings
-    tempUnit = stringResource(R.string.degree_c)
-    windSpeedUnit = stringResource(R.string.meter_sec)
+
+    viewModel.getSavedSettings()
+    val measurementSystem = viewModel.measurementSystem.collectAsStateWithLifecycle()
+    val language = viewModel.language.collectAsStateWithLifecycle()
+
+    when (measurementSystem.value) {
+        "imperial" -> {
+            tempUnit = stringResource(R.string.degree_f)
+            windSpeedUnit = stringResource(R.string.mile_hour)
+        }
+
+        "metric" -> {
+            tempUnit = stringResource(R.string.degree_c)
+            windSpeedUnit = stringResource(R.string.meter_sec)
+        }
+
+        else -> {
+            tempUnit = stringResource(R.string.degree_k)
+            windSpeedUnit = stringResource(R.string.meter_sec)
+        }
+    }
 
     LaunchedEffect(location, getData) {
-        viewModel.getWeatherData(
-            location?.longitude,
-            location?.latitude,
-            lang = lang,
-            units = unit
-        )
+        if (language.value == "device_lang") {
+            viewModel.getWeatherData(
+                location?.longitude,
+                location?.latitude,
+                lang = Locale.getDefault().language
+            )
+        } else {
+            viewModel.getWeatherData(
+                location?.longitude,
+                location?.latitude,
+            )
+        }
     }
 
 

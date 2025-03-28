@@ -33,5 +33,9 @@
     <string name="map">Map</string>
     <string name="english">English</string>
     <string name="arabic">Arabic</string>
-    <string name="default_lang">Default</string>
+    <string name="device_lang">Device Language</string>
+    <string name="_default">Default</string>
+    <string name="imperial">Imperial</string>
+    <string name="metric">Metric</string>
+    <string name="measurements_units">Measurements Units</string>
 </resources>

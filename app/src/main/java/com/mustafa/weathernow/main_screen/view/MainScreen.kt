@@ -1,5 +1,6 @@
 package com.mustafa.weathernow.main_screen.view
 
+import android.content.Context
 import android.location.Location
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,15 +20,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.aleart.view.WeatherAlertsScreen
-import com.mustafa.weathernow.data.WeatherRepository
+import com.mustafa.weathernow.data.repos.settings.SettingsRepository
+import com.mustafa.weathernow.data.repos.weather.WeatherRepository
 import com.mustafa.weathernow.data.sources.local.WeatherDatabase
 import com.mustafa.weathernow.data.sources.local.WeatherLocalDatasourceImpl
 import com.mustafa.weathernow.data.sources.remote.RetrofitHelper
 import com.mustafa.weathernow.data.sources.remote.WeatherRemoteDatasourceImpl
+import com.mustafa.weathernow.data.sources.shared_prefs.SettingsLocalDatasource
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
 import com.mustafa.weathernow.settings.view.SettingsScreen
+import com.mustafa.weathernow.settings.view_model.SettingsViewModel
+import com.mustafa.weathernow.utils.FileNames
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,6 +80,14 @@ fun BottomNavGraph(
                         WeatherDatabase.getInstance(LocalContext.current).getLocationDao()
                     ),
                     WeatherRemoteDatasourceImpl(RetrofitHelper.retrofitService)
+                ),
+                SettingsRepository.getInstance(
+                    SettingsLocalDatasource(
+                        LocalContext.current.getSharedPreferences(
+                            FileNames.SETTINGS_FILE_NAME,
+                            Context.MODE_PRIVATE
+                        )
+                    )
                 )
             )
             HomeScreen(
@@ -90,7 +103,20 @@ fun BottomNavGraph(
             FavoritesScreen()
         }
         composable<NavigationRoute.SettingScreen> {
-            SettingsScreen()
+            SettingsScreen(
+                viewModel(
+                    factory = SettingsViewModel.SettingViewModelFactory(
+                        SettingsRepository.getInstance(
+                            SettingsLocalDatasource(
+                                LocalContext.current.getSharedPreferences(
+                                    FileNames.SETTINGS_FILE_NAME,
+                                    Context.MODE_PRIVATE
+                                )
+                            )
+                        )
+                    )
+                )
+            )
         }
     }
 }

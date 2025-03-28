@@ -1,59 +1,77 @@
 package com.mustafa.weathernow.home.view_model
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.mustafa.weathernow.BuildConfig
-import com.mustafa.weathernow.data.IWeatherRepository
-import com.mustafa.weathernow.data.ResponseState
-import com.mustafa.weathernow.data.WeatherRepository
+import com.mustafa.weathernow.data.repos.settings.ISettingsRepository
+import com.mustafa.weathernow.data.repos.weather.IWeatherRepository
+import com.mustafa.weathernow.data.repos.weather.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val repo: IWeatherRepository) : ViewModel() {
+class HomeViewModel(
+    private val weatherRepo: IWeatherRepository,
+    private val settingRepository: ISettingsRepository
+) : ViewModel() {
 
     private val _weatherResponse = MutableStateFlow<ResponseState>(ResponseState.Loading)
     val weatherResponse = _weatherResponse.asStateFlow()
 
+    private val _measurementSystem = MutableStateFlow("")
+    val measurementSystem = _measurementSystem.asStateFlow()
+
+    private val _language = MutableStateFlow("")
+    val language = _language.asStateFlow()
 
     fun getWeatherData(
         longitude: Double?,
         latitude: Double?,
         apikey: String = BuildConfig.API_KEY,
-        exclude: String = "minutely",
-        units: String = "standard",
-        lang: String = "en"
+        units: String = settingRepository.getMeasurementSystem(),
+        lang: String = settingRepository.getLanguage()
     ) {
         viewModelScope.launch {
             try {
-                repo.getAllWeatherData(
+                weatherRepo.getAllWeatherData(
                     longitude,
                     latitude,
                     apikey,
-                    exclude,
-                    units,
-                    lang
+                    units = units,
+                    lang = lang
                 ).catch {
-                    Log.d("```TAG```", "getWeatherData flow catch: ${it.message}")
                 }.collect {
                     _weatherResponse.value = ResponseState.Success(it)
-                    Log.i("```TAG```", "Response: $it")
                 }
             } catch (ex: Exception) {
                 _weatherResponse.value = ResponseState.Failure(CONNECTION_ERROR)
-                Log.d("```TAG```", "getWeatherData try catch: ${ex.message}")
             }
         }
     }
 
 
+    fun getSavedSettings() {
+        getMeasurementSystem()
+        getLanguage()
+    }
+
+    private fun getMeasurementSystem() {
+        _measurementSystem.value = settingRepository.getMeasurementSystem()
+    }
+
+    private fun getLanguage() {
+        _language.value = settingRepository.getLanguage()
+    }
+
     @Suppress("UNCHECKED_CAST")
-    class HomeViewModelFactory(private val repo: WeatherRepository) : ViewModelProvider.Factory {
+    class HomeViewModelFactory(
+        private val weatherRepo: WeatherRepository,
+        private val settingRepository: ISettingsRepository
+    ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return HomeViewModel(repo) as T
+            return HomeViewModel(weatherRepo, settingRepository) as T
         }
     }
 

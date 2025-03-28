@@ -1,6 +1,8 @@
 [versions]
 accompanistDrawablepainter = "0.35.0-alpha"
 agp = "8.9.0"
+appcompat = "1.7.0"
+appcompatResources = "1.7.0"
 chartsAndroid = "2.0.0"
 compose = "1.0.0-beta01"
 converterGson = "2.11.0"
@@ -25,6 +27,8 @@ roomCompiler = "2.6.1"
 [libraries]
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistDrawablepainter" }
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activityCompose" }
+androidx-appcompat-resources = { module = "androidx.appcompat:appcompat-resources", version.ref = "appcompatResources" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
