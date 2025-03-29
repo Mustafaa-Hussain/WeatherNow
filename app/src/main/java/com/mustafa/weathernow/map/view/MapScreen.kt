@@ -15,14 +15,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,7 +44,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,6 +69,8 @@ fun MapScreen(
     val latitude = mapViewModel.latitude.collectAsStateWithLifecycle()
     val longitude = mapViewModel.longitude.collectAsStateWithLifecycle()
 
+    var marker by remember { mutableStateOf<Marker?>(null) }
+
     var currentLocation by rememberSaveable {
         mutableStateOf<GeoPoint?>(
             GeoPoint(
@@ -80,7 +80,6 @@ fun MapScreen(
         )
     }
 
-    var isLocationSelected by rememberSaveable { mutableStateOf(false) }
 
     Box {
         AndroidView(
@@ -94,22 +93,20 @@ fun MapScreen(
                     minZoomLevel = 3.5
                     maxZoomLevel = 15.0
 
-                    val marker = Marker(this)
-                    marker.position = GeoPoint(latitude.value, longitude.value)
+                    marker = Marker(this)
+                    marker?.position = currentLocation
                     overlays.add(marker)
 
                     val myReceiver: MapEventsReceiver = object : MapEventsReceiver {
                         override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
-                            marker.position = p
                             currentLocation = p
-                            isLocationSelected = true
+                            marker?.position = currentLocation
                             return false
                         }
 
                         override fun longPressHelper(p: GeoPoint?): Boolean {
-                            marker.position = p
                             currentLocation = p
-                            isLocationSelected = true
+                            marker?.position = currentLocation
                             return false
                         }
 
@@ -127,7 +124,15 @@ fun MapScreen(
             }
         )
 
-        SearchSection(mapViewModel)
+        SearchSection(
+            mapViewModel
+        ) {
+            currentLocation = GeoPoint(
+                it.lat.toDouble(),
+                it.lon.toDouble()
+            )
+            marker?.position = currentLocation
+        }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -165,7 +170,10 @@ fun MapScreen(
 }
 
 @Composable
-fun SearchSection(mapViewModel: MapViewModel) {
+fun SearchSection(
+    mapViewModel: MapViewModel,
+    onItemClicked: (SearchItem) -> Unit
+) {
     val searchResults = mapViewModel.searchResults.collectAsStateWithLifecycle(listOf())
     var query by rememberSaveable { mutableStateOf("") }
 
@@ -215,7 +223,7 @@ fun SearchSection(mapViewModel: MapViewModel) {
                     mapViewModel.searchLocation("")
                     focusManager.clearFocus()
                 }) {
-                    if(query.isNotEmpty()) {
+                    if (query.isNotEmpty()) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = stringResource(R.string.location),
@@ -244,7 +252,12 @@ fun SearchSection(mapViewModel: MapViewModel) {
             ) {
                 LazyColumn {
                     items(searchResults.value.size) {
-                        SearchRowItem(searchResults.value[it])
+                        SearchRowItem(searchResults.value[it]) {
+                            onItemClicked(it)
+                            query = ""
+                            mapViewModel.searchLocation("")
+                            focusManager.clearFocus()
+                        }
                     }
                 }
             }
@@ -253,11 +266,17 @@ fun SearchSection(mapViewModel: MapViewModel) {
 }
 
 @Composable
-fun SearchRowItem(item: SearchItem) {//todo add click listener and put this location over map
+fun SearchRowItem(
+    item: SearchItem,
+    onItemClicked: (SearchItem) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 24.dp),
+            .padding(vertical = 8.dp, horizontal = 24.dp)
+            .clickable(onClick = {
+                onItemClicked(item)
+            }),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
