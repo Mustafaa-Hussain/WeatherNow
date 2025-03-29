@@ -3,9 +3,9 @@ package com.mustafa.weathernow.map.view_model
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.mustafa.weathernow.data.repos.settings.ISettingsRepository
-import com.mustafa.weathernow.map.data.pojo.SearchItem
-import com.mustafa.weathernow.map.data.repos.ISearchRepository
+import com.mustafa.weathernow.data.location.pojo.SearchItem
+import com.mustafa.weathernow.data.location.repo.ISearchRepository
+import com.mustafa.weathernow.data.settings.repo.ISettingsRepository
 import com.mustafa.weathernow.utils.NavigationRoute.MapSources
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow

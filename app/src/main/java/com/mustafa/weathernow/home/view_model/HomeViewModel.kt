@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.mustafa.weathernow.BuildConfig
-import com.mustafa.weathernow.data.repos.settings.ISettingsRepository
-import com.mustafa.weathernow.data.repos.weather.IWeatherRepository
-import com.mustafa.weathernow.data.repos.weather.WeatherRepository
+import com.mustafa.weathernow.data.settings.repo.ISettingsRepository
+import com.mustafa.weathernow.data.weather.repos.IWeatherRepository
+import com.mustafa.weathernow.data.weather.repos.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch

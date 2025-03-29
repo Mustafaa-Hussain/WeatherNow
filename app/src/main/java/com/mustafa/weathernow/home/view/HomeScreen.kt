@@ -2,7 +2,6 @@ package com.mustafa.weathernow.home.view
 
 
 import android.content.Context
-import android.location.Geocoder
 import android.location.Location
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -59,12 +58,12 @@ import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.home.view_model.ResponseState
-import com.mustafa.weathernow.data.pojos.Current
-import com.mustafa.weathernow.data.pojos.DailyItem
-import com.mustafa.weathernow.data.pojos.HourlyItem
-import com.mustafa.weathernow.data.pojos.OneResponse
+import com.mustafa.weathernow.data.weather.pojos.Current
+import com.mustafa.weathernow.data.weather.pojos.DailyItem
+import com.mustafa.weathernow.data.weather.pojos.HourlyItem
+import com.mustafa.weathernow.data.weather.pojos.OneResponse
 import com.mustafa.weathernow.home.view_model.HomeViewModel
+import com.mustafa.weathernow.home.view_model.ResponseState
 import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.WeatherImage
@@ -72,7 +71,6 @@ import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.timeFormater
-import java.io.IOException
 import java.util.Locale
 
 private var tempUnit = ""

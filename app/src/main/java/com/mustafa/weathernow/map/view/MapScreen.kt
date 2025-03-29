@@ -49,7 +49,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.map.data.pojo.SearchItem
+import com.mustafa.weathernow.data.location.pojo.SearchItem
 import com.mustafa.weathernow.map.view_model.MapViewModel
 import com.mustafa.weathernow.utils.GeoCoderHelper
 import org.osmdroid.events.MapEventsReceiver

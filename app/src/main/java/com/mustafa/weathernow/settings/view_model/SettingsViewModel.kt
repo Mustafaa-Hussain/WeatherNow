@@ -2,7 +2,7 @@ package com.mustafa.weathernow.settings.view_model
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.mustafa.weathernow.data.repos.settings.ISettingsRepository
+import com.mustafa.weathernow.data.settings.repo.ISettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 

@@ -21,19 +21,19 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.aleart.view.WeatherAlertsScreen
-import com.mustafa.weathernow.data.repos.settings.SettingsRepository
-import com.mustafa.weathernow.data.repos.weather.WeatherRepository
-import com.mustafa.weathernow.data.sources.local.WeatherDatabase
-import com.mustafa.weathernow.data.sources.local.WeatherLocalDatasourceImpl
-import com.mustafa.weathernow.data.sources.remote.RetrofitHelper
-import com.mustafa.weathernow.data.sources.remote.WeatherRemoteDatasourceImpl
-import com.mustafa.weathernow.data.sources.shared_prefs.SettingsLocalDatasource
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
-import com.mustafa.weathernow.map.data.repos.SearchRepository
-import com.mustafa.weathernow.map.data.source.remote.SearchRemoteDataSource
-import com.mustafa.weathernow.map.data.source.remote.SearchRetrofitHelper
+import com.mustafa.weathernow.data.location.repo.SearchRepository
+import com.mustafa.weathernow.data.location.sources.remote.SearchRemoteDataSource
+import com.mustafa.weathernow.data.location.sources.remote.SearchRetrofitHelper
+import com.mustafa.weathernow.data.settings.repo.SettingsRepository
+import com.mustafa.weathernow.data.settings.shared_prefs.SettingsLocalDatasource
+import com.mustafa.weathernow.data.weather.repos.WeatherRepository
+import com.mustafa.weathernow.data.weather.sources.local.WeatherDatabase
+import com.mustafa.weathernow.data.weather.sources.local.WeatherLocalDatasourceImpl
+import com.mustafa.weathernow.data.weather.sources.remote.RetrofitHelper
+import com.mustafa.weathernow.data.weather.sources.remote.WeatherRemoteDatasourceImpl
 import com.mustafa.weathernow.map.view.MapScreen
 import com.mustafa.weathernow.map.view_model.MapViewModel
 import com.mustafa.weathernow.settings.view.SettingsScreen
@@ -90,7 +90,7 @@ fun BottomNavGraph(
             val factory = HomeViewModel.HomeViewModelFactory(
                 WeatherRepository.getInstance(
                     WeatherLocalDatasourceImpl(
-                        WeatherDatabase.getInstance(LocalContext.current).getLocationDao()
+                        WeatherDatabase.getInstance(LocalContext.current).getWeatherDao()
                     ),
                     WeatherRemoteDatasourceImpl(RetrofitHelper.retrofitService)
                 ),
