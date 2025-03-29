@@ -61,8 +61,14 @@ class MapViewModel(
     fun searchLocation(query: String) {
         viewModelScope.launch(Dispatchers.IO) {
             if (query.isNotBlank()) {
-                val result = searchRepository.searchLocation(query)
-                _searchResults.emit(result)
+                try {
+                    val result = searchRepository.searchLocation(query)
+                    _searchResults.emit(result)
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                }
+            } else {
+                _searchResults.emit(listOf())
             }
         }
     }
