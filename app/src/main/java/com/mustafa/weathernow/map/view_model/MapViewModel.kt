@@ -42,8 +42,12 @@ class MapViewModel(
         if (point == null) return
 
         when (source) {
-            MapSources.HOME_SCREEN -> saveMapLocation(point.longitude, point.latitude)
-            MapSources.SETTING_SCREEN -> saveMapLocation(point.longitude, point.latitude)
+            MapSources.HOME_SCREEN, MapSources.SETTING_SCREEN
+                -> saveMapLocation(
+                point.longitude,
+                point.latitude
+            )
+
             MapSources.FAVORITE_SCREEN -> saveFavLocation(point.longitude, point.latitude)
             MapSources.WEATHER_ALERT_SCREEN -> saveAlarmLocation(point.longitude, point.latitude)
         }

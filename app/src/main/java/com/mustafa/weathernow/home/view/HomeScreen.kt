@@ -1,12 +1,14 @@
 package com.mustafa.weathernow.home.view
 
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -57,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.data.weather.pojos.Current
 import com.mustafa.weathernow.data.weather.pojos.DailyItem
@@ -70,6 +73,7 @@ import com.mustafa.weathernow.utils.WeatherImage
 import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
+import com.mustafa.weathernow.utils.getWeatherIconRes
 import com.mustafa.weathernow.utils.timeFormater
 import java.util.Locale
 
@@ -263,6 +267,7 @@ fun LocationData(location: String) {
     }
 }
 
+@SuppressLint("UseCompatLoadingForDrawables")
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun TodayWeatherData(currentData: Current?, context: Context) {
@@ -312,23 +317,20 @@ fun TodayWeatherData(currentData: Current?, context: Context) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    GlideImage(
+                    Image(
                         modifier = Modifier.size(100.dp),
-                        model = WeatherImage.getWeatherImage(
-                            currentData.weather?.first()?.icon ?: ""
+                        painter = rememberDrawablePainter(
+                            drawable = context.getDrawable(
+                                getWeatherIconRes(currentData.weather?.first()?.icon ?: "")
+                            )
                         ),
                         contentDescription = stringResource(R.string.weather_state)
                     )
-//                    Image(
-//                        modifier = Modifier.size(100.dp),
-//                        painter = rememberDrawablePainter(
-//                            drawable = context.getDrawable(
-//                                R.drawable.sunny
-//                            )
-//                        ),
-//                        contentDescription = stringResource(R.string.weather_state)
-//                    )
-                    Text(text = currentData.weather?.first()?.description ?: "", fontSize = 18.sp)
+                    Text(
+                        text = currentData.weather?.first()?.description ?: "",
+                        fontSize = 18.sp,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
 
