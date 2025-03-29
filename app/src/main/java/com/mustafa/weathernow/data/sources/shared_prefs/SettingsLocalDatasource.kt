@@ -14,10 +14,10 @@ class SettingsLocalDatasource(val settingsLocalDatasource: SharedPreferences) {
     private val defaultLocation = "GPS"
 
     private val longitude = "longitude"
-    private val defaultLongitude: Float = 0.0f
+    private val defaultLongitude: Float = 30.0f
 
     private val latitude = "latitude"
-    private val defaultLatitude: Float = 0.0f
+    private val defaultLatitude: Float = 30.0f
 
     //measurement settings
     fun getMeasurementSystem(): String {

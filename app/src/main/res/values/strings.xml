@@ -38,4 +38,7 @@
     <string name="imperial">Imperial</string>
     <string name="metric">Metric</string>
     <string name="measurements_units">Measurements Units</string>
+    <string name="saved_location">Saved Location</string>
+    <string name="save_location">Save Location</string>
+    <string name="location_saved">Location saved</string>
 </resources>

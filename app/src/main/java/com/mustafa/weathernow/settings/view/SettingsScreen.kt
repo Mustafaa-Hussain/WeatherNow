@@ -4,6 +4,7 @@ import android.app.LocaleManager
 import android.content.Context
 import android.os.Build
 import android.os.LocaleList
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +46,7 @@ import com.mustafa.weathernow.R
 import com.mustafa.weathernow.settings.view_model.SettingsViewModel
 import com.mustafa.weathernow.utils.LocationFinder
 import com.mustafa.weathernow.utils.NavigationRoute
+import com.mustafa.weathernow.utils.NavigationRoute.MapSources
 
 @Composable
 fun SettingsScreen(
@@ -77,6 +79,7 @@ fun LocationFinder(
     location: String,
     askForLocationPermission: () -> Unit
 ) {
+    val context = LocalContext.current
     val settingOptions = listOf("GPS", "Map")
     val radioOptions = listOf(stringResource(R.string.gps), stringResource(R.string.map))
     val (selectedOption, onOptionSelected) = remember { mutableStateOf(radioOptions[0]) }
@@ -137,7 +140,9 @@ fun LocationFinder(
                                 onOptionSelected(text)
                                 if (text == radioOptions[radioOptions.lastIndex]) {
                                     //navigate to map screen
-                                    navController.navigate(NavigationRoute.MapLocationFinderScreen)
+                                    navController.navigate(
+                                        NavigationRoute.MapLocationFinderScreen(MapSources.SETTING_SCREEN)
+                                    )
                                 } else {
                                     askForLocationPermission
                                 }

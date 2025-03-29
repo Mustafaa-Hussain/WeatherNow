@@ -65,12 +65,14 @@ import com.mustafa.weathernow.data.pojos.DailyItem
 import com.mustafa.weathernow.data.pojos.HourlyItem
 import com.mustafa.weathernow.data.pojos.OneResponse
 import com.mustafa.weathernow.home.view_model.HomeViewModel
+import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.WeatherImage
 import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.timeFormater
+import java.io.IOException
 import java.util.Locale
 
 private var tempUnit = ""
@@ -135,7 +137,11 @@ fun HomeScreen(
     // in case first time user open the app and there is no location permission
     val isDefaultLocation = savedLatitude.value == 0.0f && savedLongitude.value == 0.0f
     if (!isLocationPermissionGranted && isDefaultLocation) {
-        navController.navigate(NavigationRoute.MapLocationFinderScreen)
+        navController.navigate(
+            NavigationRoute.MapLocationFinderScreen(
+                NavigationRoute.MapSources.HOME_SCREEN
+            )
+        )
     }
 
 
@@ -206,14 +212,13 @@ fun LoadingData(modifier: Modifier = Modifier) {
 
 @Composable
 fun WeatherData(weatherData: OneResponse) {
-
-    val city = Geocoder(LocalContext.current).getFromLocation(
-        weatherData.lat ?: 0.0,
-        weatherData.lon ?: 0.0,
-        1
-    ).let { if (!it.isNullOrEmpty()) it.first().subAdminArea else "" }
-
-    LocationData(city)
+    val context = LocalContext.current
+    LocationData(
+        GeoCoderHelper(context).getCityName(
+            weatherData.lat,
+            weatherData.lon
+        )
+    )
 
     TodayWeatherData(
         weatherData.current,

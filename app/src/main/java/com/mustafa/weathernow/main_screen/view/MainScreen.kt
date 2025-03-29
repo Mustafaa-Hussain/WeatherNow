@@ -18,6 +18,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.aleart.view.WeatherAlertsScreen
 import com.mustafa.weathernow.data.repos.settings.SettingsRepository
@@ -30,7 +31,11 @@ import com.mustafa.weathernow.data.sources.shared_prefs.SettingsLocalDatasource
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
+import com.mustafa.weathernow.map.data.repos.SearchRepository
+import com.mustafa.weathernow.map.data.source.remote.SearchRemoteDataSource
+import com.mustafa.weathernow.map.data.source.remote.SearchRetrofitHelper
 import com.mustafa.weathernow.map.view.MapScreen
+import com.mustafa.weathernow.map.view_model.MapViewModel
 import com.mustafa.weathernow.settings.view.SettingsScreen
 import com.mustafa.weathernow.settings.view_model.SettingsViewModel
 import com.mustafa.weathernow.utils.FileNames
@@ -130,7 +135,7 @@ fun BottomNavGraph(
             )
         }
         composable<NavigationRoute.MapLocationFinderScreen> {
-            val factory = SettingsViewModel.SettingViewModelFactory(
+            val factory = MapViewModel.MapViewModelFactory(
                 SettingsRepository.getInstance(
                     SettingsLocalDatasource(
                         LocalContext.current.getSharedPreferences(
@@ -138,13 +143,15 @@ fun BottomNavGraph(
                             Context.MODE_PRIVATE
                         )
                     )
+                ),
+                SearchRepository.getInstance(
+                    SearchRemoteDataSource(SearchRetrofitHelper.retrofitService)
                 )
             )
 
-            MapScreen(
-                navController,
-                viewModel(factory = factory)
-            )
+            val sourceScreen = it.toRoute<NavigationRoute.MapLocationFinderScreen>().sourceScreen
+
+            MapScreen(navController, viewModel(factory = factory), sourceScreen)
         }
     }
 }

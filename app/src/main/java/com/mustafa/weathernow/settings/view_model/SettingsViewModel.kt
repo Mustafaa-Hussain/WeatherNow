@@ -16,11 +16,19 @@ class SettingsViewModel(private val repo: ISettingsRepository) : ViewModel() {
     private val _measurementSystem = MutableStateFlow("")
     val measurementSystem = _measurementSystem.asStateFlow()
 
+    private val _longitude = MutableStateFlow(30.0)
+    val longitude = _longitude.asStateFlow()
+
+    private val _latitude = MutableStateFlow(30.0)
+    val latitude = _latitude.asStateFlow()
+
 
     fun getSettings() {
         _locationFinder.value = getLocationFinder()
         _language.value = getAppLanguage()
         _measurementSystem.value = getMeasurementSystem()
+        _longitude.value = getLongitude()
+        _latitude.value = getLatitude()
     }
 
 
@@ -40,6 +48,16 @@ class SettingsViewModel(private val repo: ISettingsRepository) : ViewModel() {
         repo.saveLongitude(lon.toFloat())
         repo.saveLatitude(lat.toFloat())
     }
+
+    //get saved longitude and latitude
+    private fun getLongitude(): Double {
+        return repo.getLongitude().toDouble()
+    }
+
+    private fun getLatitude(): Double {
+        return repo.getLatitude().toDouble()
+    }
+
 
     //language
     fun saveAppLanguage(lang: String) {
