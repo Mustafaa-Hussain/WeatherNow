@@ -41,4 +41,5 @@
     <string name="saved_location">Saved Location</string>
     <string name="save_location">Save Location</string>
     <string name="location_saved">Location saved</string>
+    <string name="add_favorite_location">Add favorite location</string>
 </resources>

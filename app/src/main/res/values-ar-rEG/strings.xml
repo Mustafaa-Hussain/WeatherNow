@@ -23,7 +23,7 @@
     <string name="meter_sec">م/ث</string>
     <string name="mile_hour">ميل/س</string>
     <string name="hpa">ض/ج</string>
-    <string name="next_24_h_temperatures">درجات الحرارة خلال 24 ساعة القادمة</string>
+    <string name="next_24_h_temperatures">درجات الحرارة خلال الـ ٢٤ ساعة القادمة</string>
     <string name="next_7_days">الأيام السبعة القادمة</string>
     <string name="language">اللغة</string>
     <string name="temperature_unit">وحدة درجة الحرارة</string>

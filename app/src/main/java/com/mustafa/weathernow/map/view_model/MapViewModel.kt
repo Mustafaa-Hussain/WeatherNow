@@ -7,15 +7,16 @@ import com.mustafa.weathernow.data.location.pojo.SearchItem
 import com.mustafa.weathernow.data.location.repo.ISearchRepository
 import com.mustafa.weathernow.data.settings.repo.ISettingsRepository
 import com.mustafa.weathernow.utils.NavigationRoute.MapSources
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 
+@OptIn(FlowPreview::class)
 class MapViewModel(
     private val settingsRepository: ISettingsRepository,
     private val searchRepository: ISearchRepository
@@ -26,15 +27,23 @@ class MapViewModel(
     private val _latitude = MutableStateFlow(0.0)
     val latitude = _latitude.asStateFlow()
 
-    private val _searchResults = MutableSharedFlow<List<SearchItem>>(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    val searchResults = _searchResults.asSharedFlow()
+    private val _searchQuery = MutableSharedFlow<String>(1)
+
+    private val _searchResults = MutableStateFlow<List<SearchItem>>(listOf())
+    val searchResults = _searchResults.asStateFlow()
 
     init {
         _longitude.value = settingsRepository.getLongitude().toDouble()
         _latitude.value = settingsRepository.getLatitude().toDouble()
+
+        viewModelScope.launch {
+            _searchQuery
+                .debounce(200)
+                .distinctUntilChanged()
+                .collect { query ->
+                    getSearchResults(query)
+                }
+        }
     }
 
 
@@ -63,17 +72,21 @@ class MapViewModel(
     private fun saveAlarmLocation(longitude: Double, latitude: Double) {}
 
     fun searchLocation(query: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (query.isNotBlank()) {
-                try {
-                    val result = searchRepository.searchLocation(query)
-                    _searchResults.emit(result)
-                } catch (ex: Exception) {
-                    ex.printStackTrace()
-                }
-            } else {
-                _searchResults.emit(listOf())
+        viewModelScope.launch {
+            _searchQuery.emit(query)
+        }
+    }
+
+    private suspend fun getSearchResults(query: String) {
+        if (query.isNotBlank()) {
+            try {
+                val result = searchRepository.searchLocation(query)
+                _searchResults.emit(result)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
             }
+        } else {
+            _searchResults.emit(listOf())
         }
     }
 
