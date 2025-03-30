@@ -1,8 +1,6 @@
-package com.mustafa.weathernow.home.view
-
+package com.mustafa.weathernow.weather_preview.view
 
 import android.content.Context
-import android.location.Location
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -55,7 +53,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
@@ -67,25 +64,25 @@ import com.mustafa.weathernow.data.weather.pojos.OneResponse
 import com.mustafa.weathernow.home.view_model.HomeViewModel
 import com.mustafa.weathernow.home.view_model.ResponseState
 import com.mustafa.weathernow.utils.GeoCoderHelper
-import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.WeatherImage
 import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.getWeatherIconRes
 import com.mustafa.weathernow.utils.timeFormater
+import com.mustafa.weathernow.weather_preview.view_model.WeatherPreviewViewModel
 import java.util.Locale
+
 
 private var tempUnit = ""
 private var windSpeedUnit = ""
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    navController: NavController,
-    viewModel: HomeViewModel,
-    isLocationPermissionGranted: Boolean,
-    location: Location?
+fun WeatherPreviewScreen(
+    viewModel: WeatherPreviewViewModel,
+    longitude: Double,
+    latitude: Double
 ) {
     val weatherData by viewModel.weatherResponse.collectAsStateWithLifecycle()
     var isRefreshing by rememberSaveable { mutableStateOf(true) }
@@ -93,12 +90,9 @@ fun HomeScreen(
     var isDataDisplayed by rememberSaveable { mutableStateOf(false) }
 
     viewModel.getSavedSettings()
+
     val measurementSystem = viewModel.measurementSystem.collectAsStateWithLifecycle()
     val language = viewModel.language.collectAsStateWithLifecycle()
-    val locationFinder = viewModel.locationFinder.collectAsStateWithLifecycle()
-    val savedLatitude = viewModel.savedLatitude.collectAsStateWithLifecycle()
-    val savedLongitude = viewModel.savedLongitude.collectAsStateWithLifecycle()
-
 
     when (measurementSystem.value) {
         "imperial" -> {
@@ -117,34 +111,14 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(location, getData) {
-        if (locationFinder.value == "GPS") {
-            getWeatherData(
-                language.value,
-                viewModel,
-                location?.longitude ?: savedLongitude.value.toDouble(),
-                location?.latitude ?: savedLatitude.value.toDouble()
-            )
-        } else {
-            getWeatherData(
-                language.value,
-                viewModel,
-                savedLongitude.value.toDouble(),
-                savedLatitude.value.toDouble()
-            )
-        }
-    }
-
-    // in case first time user open the app and there is no location permission
-    val isDefaultLocation = savedLatitude.value == 0.0f && savedLongitude.value == 0.0f
-    if (!isLocationPermissionGranted && isDefaultLocation) {
-        navController.navigate(
-            NavigationRoute.MapLocationFinderScreen(
-                NavigationRoute.MapSources.HOME_SCREEN
-            )
+    LaunchedEffect(getData) {
+        getWeatherData(
+            language.value,
+            viewModel,
+            longitude,
+            latitude
         )
     }
-
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -183,7 +157,7 @@ fun HomeScreen(
 
 private fun getWeatherData(
     language: String,
-    viewModel: HomeViewModel,
+    viewModel: WeatherPreviewViewModel,
     longitude: Double,
     latitude: Double
 ) {

@@ -49,7 +49,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.data.location.pojo.SearchItem
+import com.mustafa.weathernow.data.location.pojo.LocationItem
 import com.mustafa.weathernow.map.view_model.MapViewModel
 import com.mustafa.weathernow.utils.GeoCoderHelper
 import org.osmdroid.events.MapEventsReceiver
@@ -172,7 +172,7 @@ fun MapScreen(
 @Composable
 fun SearchSection(
     mapViewModel: MapViewModel,
-    onItemClicked: (SearchItem) -> Unit
+    onItemClicked: (LocationItem) -> Unit
 ) {
     val searchResults = mapViewModel.searchResults.collectAsStateWithLifecycle(listOf())
     var query by rememberSaveable { mutableStateOf("") }
@@ -267,8 +267,8 @@ fun SearchSection(
 
 @Composable
 fun SearchRowItem(
-    item: SearchItem,
-    onItemClicked: (SearchItem) -> Unit
+    item: LocationItem,
+    onItemClicked: (LocationItem) -> Unit
 ) {
     Row(
         modifier = Modifier

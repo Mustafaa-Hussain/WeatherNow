@@ -42,4 +42,7 @@
     <string name="save_location">Save Location</string>
     <string name="location_saved">Location saved</string>
     <string name="add_favorite_location">Add favorite location</string>
+    <string name="delete">Delete</string>
+    <string name="location_deleted">Location deleted</string>
+    <string name="undo">Undo</string>
 </resources>

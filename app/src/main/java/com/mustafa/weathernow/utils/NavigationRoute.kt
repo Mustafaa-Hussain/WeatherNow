@@ -19,6 +19,9 @@ sealed class NavigationRoute() {
     @Serializable
     data class MapLocationFinderScreen(val sourceScreen: String) : NavigationRoute()
 
+    @Serializable
+    data class WeatherPreviewScreen(val longitude: Double, val latitude: Double) : NavigationRoute()
+
     companion object MapSources {
         const val HOME_SCREEN = "home"
         const val SETTING_SCREEN = "setting"

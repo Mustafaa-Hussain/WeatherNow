@@ -14,8 +14,7 @@ class GeoCoderHelper(private val context: Context) {
                 lon ?: 0.0,
                 1
             ).let { if (!it.isNullOrEmpty()) it.first().subAdminArea else "" }
-        }
-        catch (ex: IOException) {
+        } catch (ex: IOException) {
             ex.printStackTrace()
         }
 

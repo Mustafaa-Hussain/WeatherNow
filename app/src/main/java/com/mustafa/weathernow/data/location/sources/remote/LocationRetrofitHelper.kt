@@ -3,7 +3,7 @@ package com.mustafa.weathernow.data.location.sources.remote
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-object SearchRetrofitHelper {
+object LocationRetrofitHelper {
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://nominatim.openstreetmap.org/")
         .addConverterFactory(GsonConverterFactory.create())
