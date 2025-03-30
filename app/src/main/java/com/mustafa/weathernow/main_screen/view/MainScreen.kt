@@ -1,5 +1,6 @@
 package com.mustafa.weathernow.main_screen.view
 
+import android.content.Context
 import android.location.Location
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,22 +18,37 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.aleart.view.WeatherAlertsScreen
-import com.mustafa.weathernow.data.WeatherRepository
-import com.mustafa.weathernow.data.sources.local.WeatherDatabase
-import com.mustafa.weathernow.data.sources.local.WeatherLocalDatasourceImpl
-import com.mustafa.weathernow.data.sources.remote.RetrofitHelper
-import com.mustafa.weathernow.data.sources.remote.WeatherRemoteDatasourceImpl
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
+import com.mustafa.weathernow.data.location.repo.SearchRepository
+import com.mustafa.weathernow.data.location.sources.remote.SearchRemoteDataSource
+import com.mustafa.weathernow.data.location.sources.remote.SearchRetrofitHelper
+import com.mustafa.weathernow.data.settings.repo.SettingsRepository
+import com.mustafa.weathernow.data.settings.shared_prefs.SettingsLocalDatasource
+import com.mustafa.weathernow.data.weather.repos.WeatherRepository
+import com.mustafa.weathernow.data.weather.sources.local.WeatherDatabase
+import com.mustafa.weathernow.data.weather.sources.local.WeatherLocalDatasourceImpl
+import com.mustafa.weathernow.data.weather.sources.remote.RetrofitHelper
+import com.mustafa.weathernow.data.weather.sources.remote.WeatherRemoteDatasourceImpl
+import com.mustafa.weathernow.map.view.MapScreen
+import com.mustafa.weathernow.map.view_model.MapViewModel
 import com.mustafa.weathernow.settings.view.SettingsScreen
+import com.mustafa.weathernow.settings.view_model.SettingsViewModel
+import com.mustafa.weathernow.utils.FileNames
+import com.mustafa.weathernow.utils.NavigationRoute
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(isLocationPermissionGranted: Boolean, location: Location?) {
+fun MainScreen(
+    isLocationPermissionGranted: Boolean,
+    location: Location?,
+    askForLocationPermission: () -> Unit
+) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -50,7 +66,8 @@ fun MainScreen(isLocationPermissionGranted: Boolean, location: Location?) {
             isLocationPermissionGranted,
             location,
             navController = navController,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            askForLocationPermission
         )
     }
 }
@@ -61,7 +78,8 @@ fun BottomNavGraph(
     isLocationPermissionGranted: Boolean,
     location: Location?,
     navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    askForLocationPermission: () -> Unit
 ) {
     NavHost(
         modifier = modifier,
@@ -72,12 +90,21 @@ fun BottomNavGraph(
             val factory = HomeViewModel.HomeViewModelFactory(
                 WeatherRepository.getInstance(
                     WeatherLocalDatasourceImpl(
-                        WeatherDatabase.getInstance(LocalContext.current).getLocationDao()
+                        WeatherDatabase.getInstance(LocalContext.current).getWeatherDao()
                     ),
                     WeatherRemoteDatasourceImpl(RetrofitHelper.retrofitService)
+                ),
+                SettingsRepository.getInstance(
+                    SettingsLocalDatasource(
+                        LocalContext.current.getSharedPreferences(
+                            FileNames.SETTINGS_FILE_NAME,
+                            Context.MODE_PRIVATE
+                        )
+                    )
                 )
             )
             HomeScreen(
+                navController,
                 viewModel = viewModel(factory = factory),
                 isLocationPermissionGranted,
                 location
@@ -90,7 +117,41 @@ fun BottomNavGraph(
             FavoritesScreen()
         }
         composable<NavigationRoute.SettingScreen> {
-            SettingsScreen()
+            SettingsScreen(
+                navController,
+                viewModel(
+                    factory = SettingsViewModel.SettingViewModelFactory(
+                        SettingsRepository.getInstance(
+                            SettingsLocalDatasource(
+                                LocalContext.current.getSharedPreferences(
+                                    FileNames.SETTINGS_FILE_NAME,
+                                    Context.MODE_PRIVATE
+                                )
+                            )
+                        )
+                    )
+                ),
+                askForLocationPermission
+            )
+        }
+        composable<NavigationRoute.MapLocationFinderScreen> {
+            val factory = MapViewModel.MapViewModelFactory(
+                SettingsRepository.getInstance(
+                    SettingsLocalDatasource(
+                        LocalContext.current.getSharedPreferences(
+                            FileNames.SETTINGS_FILE_NAME,
+                            Context.MODE_PRIVATE
+                        )
+                    )
+                ),
+                SearchRepository.getInstance(
+                    SearchRemoteDataSource(SearchRetrofitHelper.retrofitService)
+                )
+            )
+
+            val sourceScreen = it.toRoute<NavigationRoute.MapLocationFinderScreen>().sourceScreen
+
+            MapScreen(navController, viewModel(factory = factory), sourceScreen)
         }
     }
 }

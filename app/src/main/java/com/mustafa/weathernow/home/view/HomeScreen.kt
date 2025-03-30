@@ -1,14 +1,14 @@
 package com.mustafa.weathernow.home.view
 
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.location.Geocoder
 import android.location.Location
-import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -56,48 +56,93 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.data.ResponseState
-import com.mustafa.weathernow.data.pojos.Current
-import com.mustafa.weathernow.data.pojos.DailyItem
-import com.mustafa.weathernow.data.pojos.HourlyItem
-import com.mustafa.weathernow.data.pojos.OneResponse
+import com.mustafa.weathernow.data.weather.pojos.Current
+import com.mustafa.weathernow.data.weather.pojos.DailyItem
+import com.mustafa.weathernow.data.weather.pojos.HourlyItem
+import com.mustafa.weathernow.data.weather.pojos.OneResponse
 import com.mustafa.weathernow.home.view_model.HomeViewModel
+import com.mustafa.weathernow.home.view_model.ResponseState
+import com.mustafa.weathernow.utils.GeoCoderHelper
+import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.WeatherImage
 import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
+import com.mustafa.weathernow.utils.getWeatherIconRes
 import com.mustafa.weathernow.utils.timeFormater
+import java.util.Locale
 
-private var tempUnit  = ""
+private var tempUnit = ""
 private var windSpeedUnit = ""
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    navController: NavController,
     viewModel: HomeViewModel,
     isLocationPermissionGranted: Boolean,
     location: Location?
 ) {
-    val context = LocalContext.current
     val weatherData by viewModel.weatherResponse.collectAsStateWithLifecycle()
     var isRefreshing by rememberSaveable { mutableStateOf(true) }
     var getData by rememberSaveable { mutableStateOf(true) }
     var isDataDisplayed by rememberSaveable { mutableStateOf(false) }
-    var unit by rememberSaveable { mutableStateOf("metric") }
-    var lang by rememberSaveable { mutableStateOf("en") }
-    //todo get unit and lang from saved settings
-    tempUnit = stringResource(R.string.degrees_c)
-    windSpeedUnit = stringResource(R.string.km_h)
+
+    viewModel.getSavedSettings()
+    val measurementSystem = viewModel.measurementSystem.collectAsStateWithLifecycle()
+    val language = viewModel.language.collectAsStateWithLifecycle()
+    val locationFinder = viewModel.locationFinder.collectAsStateWithLifecycle()
+    val savedLatitude = viewModel.savedLatitude.collectAsStateWithLifecycle()
+    val savedLongitude = viewModel.savedLongitude.collectAsStateWithLifecycle()
+
+
+    when (measurementSystem.value) {
+        "imperial" -> {
+            tempUnit = stringResource(R.string.degree_f)
+            windSpeedUnit = stringResource(R.string.mile_hour)
+        }
+
+        "metric" -> {
+            tempUnit = stringResource(R.string.degree_c)
+            windSpeedUnit = stringResource(R.string.meter_sec)
+        }
+
+        else -> {
+            tempUnit = stringResource(R.string.degree_k)
+            windSpeedUnit = stringResource(R.string.meter_sec)
+        }
+    }
 
     LaunchedEffect(location, getData) {
-        viewModel.getWeatherData(
-            location?.longitude,
-            location?.latitude,
-            lang = lang,
-            units = unit
+        if (locationFinder.value == "GPS") {
+            getWeatherData(
+                language.value,
+                viewModel,
+                location?.longitude ?: savedLongitude.value.toDouble(),
+                location?.latitude ?: savedLatitude.value.toDouble()
+            )
+        } else {
+            getWeatherData(
+                language.value,
+                viewModel,
+                savedLongitude.value.toDouble(),
+                savedLatitude.value.toDouble()
+            )
+        }
+    }
+
+    // in case first time user open the app and there is no location permission
+    val isDefaultLocation = savedLatitude.value == 0.0f && savedLongitude.value == 0.0f
+    if (!isLocationPermissionGranted && isDefaultLocation) {
+        navController.navigate(
+            NavigationRoute.MapLocationFinderScreen(
+                NavigationRoute.MapSources.HOME_SCREEN
+            )
         )
     }
 
@@ -135,16 +180,26 @@ fun HomeScreen(
             }
         }
     }
+}
 
-
-    // in case first time user open the app and there is no location
-    if (!isLocationPermissionGranted && !isDataDisplayed) {
-        //todo navigate to search by city name screen
-        //test message
-        Toast.makeText(context, "Please enable location", Toast.LENGTH_SHORT)
-            .show()
+private fun getWeatherData(
+    language: String,
+    viewModel: HomeViewModel,
+    longitude: Double,
+    latitude: Double
+) {
+    if (language == "device_lang") {
+        viewModel.getWeatherData(
+            longitude,
+            latitude,
+            lang = Locale.getDefault().language
+        )
+    } else {
+        viewModel.getWeatherData(
+            longitude,
+            latitude
+        )
     }
-
 }
 
 @Composable
@@ -159,14 +214,13 @@ fun LoadingData(modifier: Modifier = Modifier) {
 
 @Composable
 fun WeatherData(weatherData: OneResponse) {
-
-    val city = Geocoder(LocalContext.current).getFromLocation(
-        weatherData.lat ?: 0.0,
-        weatherData.lon ?: 0.0,
-        1
-    ).let { if (!it.isNullOrEmpty()) it.first().subAdminArea else "" }
-
-    LocationData(city)
+    val context = LocalContext.current
+    LocationData(
+        GeoCoderHelper(context).getCityName(
+            weatherData.lat,
+            weatherData.lon
+        )
+    )
 
     TodayWeatherData(
         weatherData.current,
@@ -213,6 +267,7 @@ fun LocationData(location: String) {
     }
 }
 
+@SuppressLint("UseCompatLoadingForDrawables")
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun TodayWeatherData(currentData: Current?, context: Context) {
@@ -262,23 +317,20 @@ fun TodayWeatherData(currentData: Current?, context: Context) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    GlideImage(
+                    Image(
                         modifier = Modifier.size(100.dp),
-                        model = WeatherImage.getWeatherImage(
-                            currentData.weather?.first()?.icon ?: ""
+                        painter = rememberDrawablePainter(
+                            drawable = context.getDrawable(
+                                getWeatherIconRes(currentData.weather?.first()?.icon ?: "")
+                            )
                         ),
                         contentDescription = stringResource(R.string.weather_state)
                     )
-//                    Image(
-//                        modifier = Modifier.size(100.dp),
-//                        painter = rememberDrawablePainter(
-//                            drawable = context.getDrawable(
-//                                R.drawable.sunny
-//                            )
-//                        ),
-//                        contentDescription = stringResource(R.string.weather_state)
-//                    )
-                    Text(text = currentData.weather?.first()?.description ?: "", fontSize = 18.sp)
+                    Text(
+                        text = currentData.weather?.first()?.description ?: "",
+                        fontSize = 18.sp,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
 

@@ -111,4 +111,10 @@ dependencies {
     implementation(libs.compose)
 
     implementation(libs.play.services.location)
+
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.appcompat.resources)
+
+    //osm
+    implementation(libs.osmdroid.android)
 }
