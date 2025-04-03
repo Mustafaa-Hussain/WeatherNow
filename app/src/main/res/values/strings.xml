@@ -70,4 +70,5 @@
     <string name="it_is_not_possible_to_set_alarm_in_the_past">It is not possible to set alarm in the past</string>
     <string name="alarm_cancelled">Alarm Cancelled</string>
     <string name="click_to_show_weather_condition">Click to show weather condition</string>
+    <string name="no_internet_connectivity">No internet connectivity</string>
 </resources>
