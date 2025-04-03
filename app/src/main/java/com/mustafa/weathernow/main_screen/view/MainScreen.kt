@@ -20,8 +20,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.aleart.view.WeatherAlertsScreen
-import com.mustafa.weathernow.aleart.view_model.WeatherAlertsViewModel
+import com.mustafa.weathernow.alert.view.WeatherAlertsScreen
+import com.mustafa.weathernow.alert.view_model.WeatherAlertsViewModel
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel

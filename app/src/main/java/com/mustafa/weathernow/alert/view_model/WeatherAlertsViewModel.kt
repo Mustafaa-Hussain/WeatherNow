@@ -1,5 +1,6 @@
-package com.mustafa.weathernow.aleart.view_model
+package com.mustafa.weathernow.alert.view_model
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -20,11 +21,15 @@ class WeatherAlertsViewModel(
     private val _tempLocation = MutableStateFlow<Pair<Double, Double>>(Pair(0.0, 0.0))
     val tempLocation = _tempLocation.asStateFlow()
 
+    private val _lastAddedAlertId = MutableStateFlow(-1)
+    val lastAddedAlertId = _lastAddedAlertId.asStateFlow()
+
     init {
         viewModelScope.launch {
             locationRepository.getAlerts()
                 .collect {
                     _alerts.value = it
+                    _lastAddedAlertId.value = it.lastOrNull()?.id?.toInt() ?: -1
                 }
         }
     }
@@ -37,7 +42,7 @@ class WeatherAlertsViewModel(
 
     fun saveAlert(alertLocation: AlertLocation) {
         viewModelScope.launch {
-            locationRepository.insertAlert(alertLocation)
+            locationRepository.insertAlert(alertLocation).toInt()
         }
     }
 
@@ -58,7 +63,6 @@ class WeatherAlertsViewModel(
     fun resetTempLocation() {
         locationRepository.saveTempLocation(0.0, 0.0)
     }
-
 
     class WeatherAlertsViewModelFactory(private val locationRepository: ILocationRepository) :
         ViewModelProvider.Factory {

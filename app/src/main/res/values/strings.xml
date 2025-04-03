@@ -66,4 +66,7 @@
     <string name="please_select_start_time">Please select start time</string>
     <string name="duration_must_be_between_1_and_45_minutes">Duration must be between 1 and 45 minutes</string>
     <string name="start_time_must_be_in_the_future">Start time must be in the future</string>
+    <string name="alarm_permission_msg">In order for alarms to work, you need to set alarms. If this permission is not granted, the existing alarms will not work as well.</string>
+    <string name="it_is_not_possible_to_set_alarm_in_the_past">It is not possible to set alarm in the past</string>
+    <string name="alarm_cancelled">Alarm Cancelled</string>
 </resources>

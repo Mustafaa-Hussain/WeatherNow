@@ -1,7 +1,12 @@
-package com.mustafa.weathernow.aleart.view
+package com.mustafa.weathernow.alert.view
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -77,12 +82,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.app.AlarmManagerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.aleart.view_model.WeatherAlertsViewModel
+import com.mustafa.weathernow.alert.view_model.WeatherAlertsViewModel
 import com.mustafa.weathernow.data.location.pojo.AlertLocation
+import com.mustafa.weathernow.utils.AlarmBroadcastReceiverConstants.ALARM_ACTION
 import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.dateFormater
@@ -90,6 +97,7 @@ import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.formatAsTimeInMillis
 import com.mustafa.weathernow.utils.formatAsTimeSegment
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -130,6 +138,42 @@ fun WeatherAlertsScreen(
                     if (actionResult == SnackbarResult.ActionPerformed && removedItem != null) {
                         weatherAlertsViewModel.undoAlert(removedItem)
                         removedItem = null
+                    }
+
+                    if (removedItem != null) {
+                        //cancel alarm
+                        val alarmIntent = Intent(
+                            context,
+                            AlarmReceiver::class.java
+                        ).apply {
+                            action = ALARM_ACTION
+                        }
+                        val pendingIntent =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
+                                PendingIntent.getBroadcast(
+                                    context,
+                                    removedItem?.id?.toInt() ?: -1,
+                                    alarmIntent,
+                                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
+                                )
+                            } else { // Below Android 12
+                                PendingIntent.getBroadcast(
+                                    context,
+                                    removedItem?.id?.toInt() ?: -1,
+                                    alarmIntent,
+                                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                )
+                            }
+
+                        if (context.getAlarmManager() != null) {
+                            context.getAlarmManager()?.cancel(pendingIntent);
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.alarm_cancelled)
+                                        + " ${removedItem?.id?.toInt() ?: -1}",
+                                Toast.LENGTH_SHORT
+                            ).show();
+                        }
                     }
                 }
             }
@@ -288,12 +332,14 @@ fun AddToAlertsFAB(
     modifier: Modifier = Modifier,
     onAddToAlert: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     weatherAlertsViewModel.getTempLocation()
     val tempAlertLocation = weatherAlertsViewModel.tempLocation.collectAsStateWithLifecycle()
+    val lastAddedAlertId = weatherAlertsViewModel.lastAddedAlertId.collectAsStateWithLifecycle()
 
     FloatingActionButton(
         modifier = modifier.padding(16.dp),
@@ -318,14 +364,79 @@ fun AddToAlertsFAB(
                 navController,
                 tempAlertLocation.value
             ) {
+
                 //save alert location
                 weatherAlertsViewModel.saveAlert(it)
+
+                //schedule alarm
+                scope.launch {
+                    while (lastAddedAlertId.value == -1) delay(100)
+
+                    val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
+                        action = ALARM_ACTION
+                        putExtra("alertId", lastAddedAlertId.value)
+                    }
+                    val pendingIntent =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
+                            PendingIntent.getBroadcast(
+                                context,
+                                lastAddedAlertId.value,
+                                alarmIntent,
+                                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
+                            )
+                        } else { // Below Android 12
+                            PendingIntent.getBroadcast(
+                                context,
+                                lastAddedAlertId.value,
+                                alarmIntent,
+                                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                            )
+                        }
+
+                    // pass calender trigger alarm time
+                    context.setExactAlarm(it.startTime * 1000, pendingIntent)
+
+                }
                 showBottomSheet = false
                 weatherAlertsViewModel.resetTempLocation()
             }
         }
     }
 }
+
+fun Context.setExactAlarm(
+    triggerAtMillis: Long,
+    operation: PendingIntent?,
+    type: Int = AlarmManager.RTC_WAKEUP,
+) {
+    val currentTime = Calendar.getInstance().timeInMillis
+    if (triggerAtMillis <= currentTime) {
+        Toast.makeText(
+            this,
+            getString(R.string.it_is_not_possible_to_set_alarm_in_the_past),
+            Toast.LENGTH_SHORT
+        ).show()
+        return
+    }
+
+    if (operation == null) {
+        Log.i("```TAG```", "operation is null")
+        return
+    }
+
+    val manager = getAlarmManager()
+    manager?.let {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || it.canScheduleExactAlarms()) {
+            AlarmManagerCompat.setExactAndAllowWhileIdle(
+                it,
+                type,
+                triggerAtMillis,
+                operation
+            )
+        }
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -367,7 +478,14 @@ fun BottomSheetContent(
 
         Button(
             onClick = {
-                if (isValidInputData(context, tempAlertLocation, startTime, startDate, duration)) {
+                if (isValidInputData(
+                        context,
+                        tempAlertLocation,
+                        startTime,
+                        startDate,
+                        duration
+                    )
+                ) {
                     onSaveAlert(
                         AlertLocation(
                             latitude = tempAlertLocation.first,
@@ -620,7 +738,10 @@ fun TimePickerSection(startTime: MutableState<Triple<Int, Int, Boolean>>) {
 }
 
 @Composable
-fun LocationPickerSection(navController: NavController, tempAlertLocation: Pair<Double, Double>) {
+fun LocationPickerSection(
+    navController: NavController,
+    tempAlertLocation: Pair<Double, Double>
+) {
     val context = LocalContext.current
 
     Row(
@@ -728,7 +849,7 @@ fun StartTimePicker(
                     .padding(top = 16.dp),
                 onClick = {
                     onConfirm(
-                        timePickerState.hour % 12,
+                        (timePickerState.hour % 12).let { if (it == 0) 12 else it },
                         timePickerState.minute,
                         timePickerState.isAfternoon
                     )
@@ -738,3 +859,6 @@ fun StartTimePicker(
         }
     }
 }
+
+fun Context.getAlarmManager() =
+    getSystemService(Context.ALARM_SERVICE) as? AlarmManager
