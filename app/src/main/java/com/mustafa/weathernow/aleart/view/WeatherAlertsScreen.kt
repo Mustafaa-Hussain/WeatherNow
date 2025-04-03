@@ -55,6 +55,7 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableLongState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -366,7 +367,7 @@ fun BottomSheetContent(
 
         Button(
             onClick = {
-                if (isValidInputData(context, tempAlertLocation, startTime, duration)) {
+                if (isValidInputData(context, tempAlertLocation, startTime, startDate, duration)) {
                     onSaveAlert(
                         AlertLocation(
                             latitude = tempAlertLocation.first,
@@ -394,6 +395,7 @@ private fun isValidInputData(
     context: Context,
     tempAlertLocation: Pair<Double, Double>,
     startTime: MutableState<Triple<Int, Int, Boolean>>,
+    startDate: MutableLongState,
     duration: MutableIntState
 ): Boolean {
     var isAllDataValid = true
@@ -409,6 +411,15 @@ private fun isValidInputData(
         Toast.makeText(
             context,
             context.getString(R.string.please_select_start_time),
+            Toast.LENGTH_SHORT
+        ).show()
+        isAllDataValid = false
+    }
+
+    if (startTime.value.formatAsTimeInMillis(startDate.longValue) > Calendar.getInstance().timeInMillis) {
+        Toast.makeText(
+            context,
+            context.getString(R.string.start_time_must_be_in_the_future),
             Toast.LENGTH_SHORT
         ).show()
         isAllDataValid = false
