@@ -49,7 +49,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.data.location.pojo.SearchItem
+import com.mustafa.weathernow.data.location.pojo.LocationItem
 import com.mustafa.weathernow.map.view_model.MapViewModel
 import com.mustafa.weathernow.utils.GeoCoderHelper
 import org.osmdroid.events.MapEventsReceiver
@@ -154,12 +154,34 @@ fun MapScreen(
 
             Button(
                 onClick = {
-                    mapViewModel.saveLocation(currentLocation, sourceScreen)
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.location_saved), Toast.LENGTH_SHORT
-                    ).show()
-                    navController.popBackStack()
+                    GeoCoderHelper(context).getCityName(
+                        currentLocation?.latitude,
+                        currentLocation?.longitude
+                    ).let {
+                        if (it != null && it.isNotEmpty()) {
+                            val result = mapViewModel.saveLocation(currentLocation, sourceScreen)
+
+                            if (result) {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.location_saved), Toast.LENGTH_SHORT
+                                ).show()
+                                navController.popBackStack()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.chose_another_location),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } else {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.incorrect_location),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                 },
                 modifier = Modifier.padding(8.dp)
             ) {
@@ -172,7 +194,7 @@ fun MapScreen(
 @Composable
 fun SearchSection(
     mapViewModel: MapViewModel,
-    onItemClicked: (SearchItem) -> Unit
+    onItemClicked: (LocationItem) -> Unit
 ) {
     val searchResults = mapViewModel.searchResults.collectAsStateWithLifecycle(listOf())
     var query by rememberSaveable { mutableStateOf("") }
@@ -267,8 +289,8 @@ fun SearchSection(
 
 @Composable
 fun SearchRowItem(
-    item: SearchItem,
-    onItemClicked: (SearchItem) -> Unit
+    item: LocationItem,
+    onItemClicked: (LocationItem) -> Unit
 ) {
     Row(
         modifier = Modifier

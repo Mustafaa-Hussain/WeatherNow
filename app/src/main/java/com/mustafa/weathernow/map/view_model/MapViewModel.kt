@@ -3,11 +3,15 @@ package com.mustafa.weathernow.map.view_model
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.mustafa.weathernow.data.location.pojo.SearchItem
-import com.mustafa.weathernow.data.location.repo.ISearchRepository
+import com.mustafa.weathernow.data.location.pojo.FavoriteLocation
+import com.mustafa.weathernow.data.location.pojo.LocationItem
+import com.mustafa.weathernow.data.location.repo.ILocationRepository
 import com.mustafa.weathernow.data.settings.repo.ISettingsRepository
+import com.mustafa.weathernow.data.settings.repo.SettingsRepository
+import com.mustafa.weathernow.favorites.view.FavoriteLocations
 import com.mustafa.weathernow.utils.NavigationRoute.MapSources
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +23,7 @@ import org.osmdroid.util.GeoPoint
 @OptIn(FlowPreview::class)
 class MapViewModel(
     private val settingsRepository: ISettingsRepository,
-    private val searchRepository: ISearchRepository
+    private val locationRepository: ILocationRepository
 ) : ViewModel() {
     private val _longitude = MutableStateFlow(0.0)
     val longitude = _longitude.asStateFlow()
@@ -27,9 +31,12 @@ class MapViewModel(
     private val _latitude = MutableStateFlow(0.0)
     val latitude = _latitude.asStateFlow()
 
-    private val _searchQuery = MutableSharedFlow<String>(1)
+    private val _searchQuery = MutableSharedFlow<String>(
+        1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
-    private val _searchResults = MutableStateFlow<List<SearchItem>>(listOf())
+    private val _searchResults = MutableStateFlow<List<LocationItem>>(listOf())
     val searchResults = _searchResults.asStateFlow()
 
     init {
@@ -38,7 +45,7 @@ class MapViewModel(
 
         viewModelScope.launch {
             _searchQuery
-                .debounce(200)
+                .debounce(250)
                 .distinctUntilChanged()
                 .collect { query ->
                     getSearchResults(query)
@@ -47,8 +54,8 @@ class MapViewModel(
     }
 
 
-    fun saveLocation(point: GeoPoint?, source: String) {
-        if (point == null) return
+    fun saveLocation(point: GeoPoint?, source: String): Boolean {
+        if (point == null) return false
 
         when (source) {
             MapSources.HOME_SCREEN, MapSources.SETTING_SCREEN
@@ -60,6 +67,7 @@ class MapViewModel(
             MapSources.FAVORITE_SCREEN -> saveFavLocation(point.longitude, point.latitude)
             MapSources.WEATHER_ALERT_SCREEN -> saveAlarmLocation(point.longitude, point.latitude)
         }
+        return true
     }
 
     private fun saveMapLocation(longitude: Double, latitude: Double) {
@@ -67,9 +75,21 @@ class MapViewModel(
         settingsRepository.saveLongitude(longitude.toFloat())
     }
 
-    private fun saveFavLocation(longitude: Double, latitude: Double) {}
+    private fun saveFavLocation(longitude: Double, latitude: Double) {
+        viewModelScope.launch {
+            locationRepository.insertFavoriteLocation(
+                FavoriteLocation(
+                    longitude = longitude,
+                    latitude = latitude
+                )
+            )
+        }
+    }
 
-    private fun saveAlarmLocation(longitude: Double, latitude: Double) {}
+    private fun saveAlarmLocation(longitude: Double, latitude: Double) {
+        //save temp alert location
+        locationRepository.saveTempLocation(longitude, latitude)
+    }
 
     fun searchLocation(query: String) {
         viewModelScope.launch {
@@ -80,7 +100,7 @@ class MapViewModel(
     private suspend fun getSearchResults(query: String) {
         if (query.isNotBlank()) {
             try {
-                val result = searchRepository.searchLocation(query)
+                val result = locationRepository.searchLocation(query)
                 _searchResults.emit(result)
             } catch (ex: Exception) {
                 ex.printStackTrace()
@@ -93,7 +113,7 @@ class MapViewModel(
 
     class MapViewModelFactory(
         private val settingsRepository: ISettingsRepository,
-        private val searchRepository: ISearchRepository
+        private val searchRepository: ILocationRepository
     ) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

@@ -16,6 +16,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mustafa.weathernow.ui.theme.WeatherNowTheme
+import com.mustafa.weathernow.utils.AlarmBroadcastReceiverConstants.LATITUDE
+import com.mustafa.weathernow.utils.AlarmBroadcastReceiverConstants.LONGITUDE
 import com.mustafa.weathernow.utils.LocationFinder
 import com.mustafa.weathernow.utils.LocationFinder.Companion.LOCATION_PERMISSION_REQUEST_CODE
 import kotlinx.coroutines.delay
@@ -26,9 +28,14 @@ class MainActivity : ComponentActivity() {
     private var locationPermissionGranted by mutableStateOf(true)
     private lateinit var locationFinder: LocationFinder
 
+    private val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val notificationLongitude = intent.getDoubleExtra(LONGITUDE, 0.0)
+        val notificationLatitude = intent.getDoubleExtra(LATITUDE, 0.0)
 
         locationFinder = LocationFinder(
             this,
@@ -40,7 +47,9 @@ class MainActivity : ComponentActivity() {
                 MainScreen(
                     locationPermissionGranted,
                     location.value,
-                    locationFinder::gainLocationPermission
+                    locationFinder::gainLocationPermission,
+                    notificationLatitude,
+                    notificationLongitude
                 )
                 SplashScreen()
             }
@@ -51,6 +60,17 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         locationFinder.gainLocationPermission()
+    }
+
+    private fun gainNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIFICATION_PERMISSION_REQUEST_CODE
+                )
+            }
+        }
     }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
@@ -71,6 +91,7 @@ class MainActivity : ComponentActivity() {
                 locationPermissionGranted = false
             }
         }
+        gainNotificationPermission()
     }
 
     @Composable

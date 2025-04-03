@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -20,13 +21,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mustafa.weathernow.R
-import com.mustafa.weathernow.aleart.view.WeatherAlertsScreen
+import com.mustafa.weathernow.alert.view.WeatherAlertsScreen
+import com.mustafa.weathernow.alert.view_model.WeatherAlertsViewModel
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
-import com.mustafa.weathernow.data.location.repo.SearchRepository
-import com.mustafa.weathernow.data.location.sources.remote.SearchRemoteDataSource
-import com.mustafa.weathernow.data.location.sources.remote.SearchRetrofitHelper
+import com.mustafa.weathernow.data.location.repo.LocationRepository
+import com.mustafa.weathernow.data.location.sources.local.LocationDatabase
+import com.mustafa.weathernow.data.location.sources.local.LocationLocalDatasource
+import com.mustafa.weathernow.data.location.sources.remote.LocationRemoteDataSource
+import com.mustafa.weathernow.data.location.sources.remote.LocationRetrofitHelper
+import com.mustafa.weathernow.data.location.sources.shared_prefs.LocationSharedPrefs
 import com.mustafa.weathernow.data.settings.repo.SettingsRepository
 import com.mustafa.weathernow.data.settings.shared_prefs.SettingsLocalDatasource
 import com.mustafa.weathernow.data.weather.repos.WeatherRepository
@@ -34,12 +39,15 @@ import com.mustafa.weathernow.data.weather.sources.local.WeatherDatabase
 import com.mustafa.weathernow.data.weather.sources.local.WeatherLocalDatasourceImpl
 import com.mustafa.weathernow.data.weather.sources.remote.RetrofitHelper
 import com.mustafa.weathernow.data.weather.sources.remote.WeatherRemoteDatasourceImpl
+import com.mustafa.weathernow.favorites.view_model.FavoriteViewModel
 import com.mustafa.weathernow.map.view.MapScreen
 import com.mustafa.weathernow.map.view_model.MapViewModel
 import com.mustafa.weathernow.settings.view.SettingsScreen
 import com.mustafa.weathernow.settings.view_model.SettingsViewModel
 import com.mustafa.weathernow.utils.FileNames
 import com.mustafa.weathernow.utils.NavigationRoute
+import com.mustafa.weathernow.weather_preview.view.WeatherPreviewScreen
+import com.mustafa.weathernow.weather_preview.view_model.WeatherPreviewViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,7 +55,9 @@ import com.mustafa.weathernow.utils.NavigationRoute
 fun MainScreen(
     isLocationPermissionGranted: Boolean,
     location: Location?,
-    askForLocationPermission: () -> Unit
+    askForLocationPermission: () -> Unit,
+    notificationLatitude: Double,
+    notificationLongitude: Double
 ) {
     val navController = rememberNavController()
 
@@ -69,6 +79,17 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding),
             askForLocationPermission
         )
+
+        LaunchedEffect(notificationLatitude, notificationLongitude) {
+            if (notificationLatitude != 0.0 && notificationLongitude != 0.0) {
+                navController.navigate(
+                    NavigationRoute.WeatherPreviewScreen(
+                        notificationLongitude,
+                        notificationLatitude
+                    )
+                )
+            }
+        }
     }
 }
 
@@ -111,10 +132,37 @@ fun BottomNavGraph(
             )
         }
         composable<NavigationRoute.WeatherAlertScreen> {
-            WeatherAlertsScreen()
+            val factory = WeatherAlertsViewModel.WeatherAlertsViewModelFactory(
+                LocationRepository.getInstance(
+                    LocationRemoteDataSource(LocationRetrofitHelper.retrofitService),
+                    LocationLocalDatasource(
+                        LocationDatabase.getInstance(context = LocalContext.current)
+                            .getLocatingDao()
+                    ),
+                    LocationSharedPrefs(LocalContext.current)
+                )
+            )
+
+            WeatherAlertsScreen(
+                navController, viewModel(factory = factory)
+            )
         }
         composable<NavigationRoute.FavoriteScreen> {
-            FavoritesScreen()
+            val factory = FavoriteViewModel.FavoriteViewModelFactory(
+                LocationRepository.getInstance(
+                    LocationRemoteDataSource(LocationRetrofitHelper.retrofitService),
+                    LocationLocalDatasource(
+                        LocationDatabase.getInstance(context = LocalContext.current)
+                            .getLocatingDao()
+                    ),
+                    LocationSharedPrefs(LocalContext.current)
+                )
+            )
+
+            FavoritesScreen(
+                navController,
+                viewModel(factory = factory)
+            )
         }
         composable<NavigationRoute.SettingScreen> {
             SettingsScreen(
@@ -144,14 +192,47 @@ fun BottomNavGraph(
                         )
                     )
                 ),
-                SearchRepository.getInstance(
-                    SearchRemoteDataSource(SearchRetrofitHelper.retrofitService)
+                LocationRepository.getInstance(
+                    LocationRemoteDataSource(LocationRetrofitHelper.retrofitService),
+                    LocationLocalDatasource(
+                        LocationDatabase.getInstance(context = LocalContext.current)
+                            .getLocatingDao()
+                    ),
+                    LocationSharedPrefs(LocalContext.current)
                 )
             )
 
             val sourceScreen = it.toRoute<NavigationRoute.MapLocationFinderScreen>().sourceScreen
 
             MapScreen(navController, viewModel(factory = factory), sourceScreen)
+        }
+
+        composable<NavigationRoute.WeatherPreviewScreen> {
+            val longitude = it.toRoute<NavigationRoute.WeatherPreviewScreen>().longitude
+            val latitude = it.toRoute<NavigationRoute.WeatherPreviewScreen>().latitude
+
+            val factory = WeatherPreviewViewModel.Factory(
+                WeatherRepository.getInstance(
+                    WeatherLocalDatasourceImpl(
+                        WeatherDatabase.getInstance(LocalContext.current).getWeatherDao()
+                    ),
+                    WeatherRemoteDatasourceImpl(RetrofitHelper.retrofitService)
+                ),
+                SettingsRepository.getInstance(
+                    SettingsLocalDatasource(
+                        LocalContext.current.getSharedPreferences(
+                            FileNames.SETTINGS_FILE_NAME,
+                            Context.MODE_PRIVATE
+                        )
+                    )
+                )
+            )
+
+            WeatherPreviewScreen(
+                viewModel(factory = factory),
+                longitude,
+                latitude
+            )
         }
     }
 }

@@ -1,8 +1,6 @@
-package com.mustafa.weathernow.home.view
-
+package com.mustafa.weathernow.weather_preview.view
 
 import android.content.Context
-import android.location.Location
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -10,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -55,7 +54,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
@@ -64,41 +62,95 @@ import com.mustafa.weathernow.data.weather.pojos.Current
 import com.mustafa.weathernow.data.weather.pojos.DailyItem
 import com.mustafa.weathernow.data.weather.pojos.HourlyItem
 import com.mustafa.weathernow.data.weather.pojos.OneResponse
-import com.mustafa.weathernow.home.view_model.HomeViewModel
 import com.mustafa.weathernow.home.view_model.ResponseState
 import com.mustafa.weathernow.utils.GeoCoderHelper
-import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.WeatherImage
 import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.getWeatherIconRes
+import com.mustafa.weathernow.utils.internit_connectivity.ConnectivityObserver
+import com.mustafa.weathernow.utils.internit_connectivity.NetworkConnectivityObserver
 import com.mustafa.weathernow.utils.timeFormater
+import com.mustafa.weathernow.weather_preview.view_model.WeatherPreviewViewModel
 import java.util.Locale
+
 
 private var tempUnit = ""
 private var windSpeedUnit = ""
 
+@Composable
+fun WeatherPreviewScreen(
+    viewModel: WeatherPreviewViewModel,
+    longitude: Double,
+    latitude: Double,
+    connectivityObserver: ConnectivityObserver = NetworkConnectivityObserver(LocalContext.current)
+) {
+    val networkState = connectivityObserver.observe().collectAsStateWithLifecycle(
+        ConnectivityObserver.Status.UnAvailable
+    )
+
+    var lostInternetConnection by rememberSaveable { mutableStateOf(false) }
+    var displayData by rememberSaveable { mutableStateOf(false) }
+
+    if (displayData) {
+        DisplayData(
+            viewModel,
+            longitude,
+            latitude,
+            lostInternetConnection
+        )
+    }
+
+    when (networkState.value) {
+        ConnectivityObserver.Status.Available -> {
+            //display data
+            lostInternetConnection = false
+            displayData = true
+        }
+
+        ConnectivityObserver.Status.Loosing,
+        ConnectivityObserver.Status.Lost -> {
+            //show you lost internet connection message
+            lostInternetConnection = true
+        }
+
+        ConnectivityObserver.Status.UnAvailable -> {
+            //show no internet connectivity
+            displayData = false
+            NoInternetConnectivity()
+        }
+    }
+}
+
+@Composable
+fun NoInternetConnectivity() {
+    Box(
+        Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = stringResource(R.string.no_internet_connectivity))
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    navController: NavController,
-    viewModel: HomeViewModel,
-    isLocationPermissionGranted: Boolean,
-    location: Location?
+fun DisplayData(
+    viewModel: WeatherPreviewViewModel,
+    longitude: Double,
+    latitude: Double,
+    lostInternetConnection: Boolean
 ) {
+
     val weatherData by viewModel.weatherResponse.collectAsStateWithLifecycle()
     var isRefreshing by rememberSaveable { mutableStateOf(true) }
     var getData by rememberSaveable { mutableStateOf(true) }
     var isDataDisplayed by rememberSaveable { mutableStateOf(false) }
 
     viewModel.getSavedSettings()
+
     val measurementSystem = viewModel.measurementSystem.collectAsStateWithLifecycle()
     val language = viewModel.language.collectAsStateWithLifecycle()
-    val locationFinder = viewModel.locationFinder.collectAsStateWithLifecycle()
-    val savedLatitude = viewModel.savedLatitude.collectAsStateWithLifecycle()
-    val savedLongitude = viewModel.savedLongitude.collectAsStateWithLifecycle()
-
 
     when (measurementSystem.value) {
         "imperial" -> {
@@ -117,34 +169,14 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(location, getData) {
-        if (locationFinder.value == "GPS") {
-            getWeatherData(
-                language.value,
-                viewModel,
-                location?.longitude ?: savedLongitude.value.toDouble(),
-                location?.latitude ?: savedLatitude.value.toDouble()
-            )
-        } else {
-            getWeatherData(
-                language.value,
-                viewModel,
-                savedLongitude.value.toDouble(),
-                savedLatitude.value.toDouble()
-            )
-        }
-    }
-
-    // in case first time user open the app and there is no location permission
-    val isDefaultLocation = savedLatitude.value == 0.0f && savedLongitude.value == 0.0f
-    if (!isLocationPermissionGranted && isDefaultLocation) {
-        navController.navigate(
-            NavigationRoute.MapLocationFinderScreen(
-                NavigationRoute.MapSources.HOME_SCREEN
-            )
+    LaunchedEffect(getData) {
+        getWeatherData(
+            language.value,
+            viewModel,
+            longitude,
+            latitude
         )
     }
-
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -159,6 +191,9 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (lostInternetConnection) {
+                Text(text = stringResource(R.string.no_internet_connectivity))
+            }
             when (weatherData) {
                 is ResponseState.Failure -> {
                     isRefreshing = false
@@ -183,7 +218,7 @@ fun HomeScreen(
 
 private fun getWeatherData(
     language: String,
-    viewModel: HomeViewModel,
+    viewModel: WeatherPreviewViewModel,
     longitude: Double,
     latitude: Double
 ) {

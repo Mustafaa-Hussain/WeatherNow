@@ -79,7 +79,6 @@ fun LocationFinder(
     location: String,
     askForLocationPermission: () -> Unit
 ) {
-    val context = LocalContext.current
     val settingOptions = listOf("GPS", "Map")
     val radioOptions = listOf(stringResource(R.string.gps), stringResource(R.string.map))
     val (selectedOption, onOptionSelected) = remember { mutableStateOf(radioOptions[0]) }

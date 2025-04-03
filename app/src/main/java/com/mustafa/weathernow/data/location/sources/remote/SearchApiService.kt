@@ -1,6 +1,6 @@
 package com.mustafa.weathernow.data.location.sources.remote
 
-import com.mustafa.weathernow.data.location.pojo.SearchItem
+import com.mustafa.weathernow.data.location.pojo.LocationItem
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -9,5 +9,5 @@ interface SearchApiService {
     suspend fun searchLocation(
         @Query("q") query: String,
         @Query("format") format: String = "json"
-    ): List<SearchItem>
+    ): List<LocationItem>
 }
