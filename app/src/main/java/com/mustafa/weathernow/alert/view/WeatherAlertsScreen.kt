@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
@@ -59,11 +57,9 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableLongState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,8 +72,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -98,8 +92,7 @@ import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.dateFormater
 import com.mustafa.weathernow.utils.dateTimeFormater
-import com.mustafa.weathernow.utils.format
-import com.mustafa.weathernow.utils.formatAsTimeInMillis
+import com.mustafa.weathernow.utils.formatAsTimeInSeconds
 import com.mustafa.weathernow.utils.formatAsTimeSegment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -487,7 +480,7 @@ fun BottomSheetContent(
                         AlertLocation(
                             latitude = tempAlertLocation.first,
                             longitude = tempAlertLocation.second,
-                            startTime = startTime.value.formatAsTimeInMillis(startDate.longValue),
+                            startTime = startTime.value.formatAsTimeInSeconds(startDate.longValue),
                             alertType = alertOptions[radioOptions.indexOf(selectedOption)],
                         )
                     )
@@ -529,7 +522,7 @@ private fun isValidInputData(
         isAllDataValid = false
     }
 
-    if (startTime.value.formatAsTimeInMillis(startDate.longValue) > Calendar.getInstance().timeInMillis) {
+    if (startTime.value.formatAsTimeInSeconds(startDate.longValue) * 1000 < Calendar.getInstance().timeInMillis) {
         Toast.makeText(
             context,
             context.getString(R.string.start_time_must_be_in_the_future),
