@@ -204,14 +204,7 @@ fun WeatherAlertsScreen(
                 navController,
                 weatherAlertsViewModel,
                 Modifier.align(Alignment.End)
-            ) {
-                //show add alert dialog
-                ModalBottomSheet(
-                    onDismissRequest = { }
-                ) {
-                    Text(text = "Add Alert")
-                }
-            }
+            )
 
             SnackbarHost(hostState = snackbarHostState)
         }
@@ -336,8 +329,7 @@ fun DeleteBackground() {
 fun AddToAlertsFAB(
     navController: NavController,
     weatherAlertsViewModel: WeatherAlertsViewModel,
-    modifier: Modifier = Modifier,
-    onAddToAlert: @Composable () -> Unit
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState()
@@ -462,7 +454,6 @@ fun BottomSheetContent(
         val context = LocalContext.current
         var startTime = rememberSaveable { mutableStateOf(Triple(0, 0, false)) }
         var startDate = rememberSaveable { mutableLongStateOf(0L) }
-        var duration = rememberSaveable { mutableIntStateOf(1) }
 
         val alertOptions = listOf(
             "notification",
@@ -480,8 +471,6 @@ fun BottomSheetContent(
         TimePickerSection(startTime)
         DatePickerSection(startDate)
         Spacer(Modifier.height(8.dp))
-        DurationSection(duration)
-        Spacer(Modifier.height(8.dp))
         AlertTypeSection(radioOptions, selectedOption, onOptionSelected)
         Spacer(Modifier.height(16.dp))
 
@@ -491,8 +480,7 @@ fun BottomSheetContent(
                         context,
                         tempAlertLocation,
                         startTime,
-                        startDate,
-                        duration
+                        startDate
                     )
                 ) {
                     onSaveAlert(
@@ -500,7 +488,6 @@ fun BottomSheetContent(
                             latitude = tempAlertLocation.first,
                             longitude = tempAlertLocation.second,
                             startTime = startTime.value.formatAsTimeInMillis(startDate.longValue),
-                            duration = duration.intValue,
                             alertType = alertOptions[radioOptions.indexOf(selectedOption)],
                         )
                     )
@@ -523,7 +510,6 @@ private fun isValidInputData(
     tempAlertLocation: Pair<Double, Double>,
     startTime: MutableState<Triple<Int, Int, Boolean>>,
     startDate: MutableLongState,
-    duration: MutableIntState
 ): Boolean {
     var isAllDataValid = true
     if (tempAlertLocation.first == 0.0 || tempAlertLocation.second == 0.0) {
@@ -547,15 +533,6 @@ private fun isValidInputData(
         Toast.makeText(
             context,
             context.getString(R.string.start_time_must_be_in_the_future),
-            Toast.LENGTH_SHORT
-        ).show()
-        isAllDataValid = false
-    }
-
-    if (duration.intValue < 1 || duration.intValue > 45) {
-        Toast.makeText(
-            context,
-            context.getString(R.string.duration_must_be_between_1_and_45_minutes),
             Toast.LENGTH_SHORT
         ).show()
         isAllDataValid = false
@@ -601,44 +578,6 @@ fun AlertTypeSection(
                 Text(text = text)
             }
         }
-    }
-}
-
-@Composable
-fun DurationSection(duration: MutableIntState) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Icon(
-            modifier = Modifier.padding(end = 8.dp),
-            painter = painterResource(R.drawable.ic_duration),
-            contentDescription = stringResource(R.string.initial_time)
-        )
-        Text(
-            text = "${stringResource(R.string.duration)} : ",
-            modifier = Modifier.padding(end = 8.dp)
-        )
-        BasicTextField(
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            value = duration.value.format(),
-            onValueChange = {
-                val num = it.toIntOrNull() ?: 0
-                duration.value = if (num <= 45)
-                    num
-                else
-                    45
-
-            },
-            textStyle = TextStyle(
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = MaterialTheme.typography.bodyLarge.fontSize
-            )
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "${1.format()} to ${45.format()} ${stringResource(R.string.minutes)}")
     }
 }
 

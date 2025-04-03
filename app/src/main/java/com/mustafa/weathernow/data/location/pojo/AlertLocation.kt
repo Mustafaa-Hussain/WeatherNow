@@ -10,6 +10,5 @@ data class AlertLocation(
     val longitude: Double,
     val latitude: Double,
     val startTime: Long,
-    val duration: Int,
     val alertType: String //notification or overlay alert
 )
