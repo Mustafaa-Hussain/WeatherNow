@@ -56,7 +56,7 @@ fun Int?.formatAsTimeSegment(): String {
         0.format() + NumberFormat.getInstance().format(this)
 }
 
-fun Triple<Int, Int, Boolean>.formatAsTimeInSeconds(date: Long): Long {
+fun Triple<Int, Int, Boolean>.formatAsTimeInMillis(date: Long): Long {
     val hoursOffset = if (this.third) 12 else 0
     val calendar = Calendar.getInstance(Locale.getDefault())
 
@@ -67,5 +67,5 @@ fun Triple<Int, Int, Boolean>.formatAsTimeInSeconds(date: Long): Long {
     calendar.set(Calendar.SECOND, 0)
     calendar.set(Calendar.MILLISECOND, 0)
 
-    return calendar.timeInMillis / 1000
+    return calendar.timeInMillis
 }

@@ -92,7 +92,7 @@ import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.dateFormater
 import com.mustafa.weathernow.utils.dateTimeFormater
-import com.mustafa.weathernow.utils.formatAsTimeInSeconds
+import com.mustafa.weathernow.utils.formatAsTimeInMillis
 import com.mustafa.weathernow.utils.formatAsTimeSegment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -285,7 +285,7 @@ fun AlertItem(
                                 alert.longitude
                             ) ?: "",
                     )
-                    Text(text = alert.startTime.dateTimeFormater())
+                    Text(text = (alert.startTime/1000).dateTimeFormater())
                 }
                 Icon(
                     modifier = Modifier.weight(1f),
@@ -388,8 +388,7 @@ fun AddToAlertsFAB(
                         }
 
                     // pass calender trigger alarm time
-                    context.setExactAlarm(it.startTime * 1000, pendingIntent)
-
+                    context.setExactAlarm(it.startTime, pendingIntent)
                 }
                 showBottomSheet = false
                 weatherAlertsViewModel.resetTempLocation()
@@ -480,7 +479,7 @@ fun BottomSheetContent(
                         AlertLocation(
                             latitude = tempAlertLocation.first,
                             longitude = tempAlertLocation.second,
-                            startTime = startTime.value.formatAsTimeInSeconds(startDate.longValue),
+                            startTime = startTime.value.formatAsTimeInMillis(startDate.longValue),
                             alertType = alertOptions[radioOptions.indexOf(selectedOption)],
                         )
                     )
@@ -522,7 +521,7 @@ private fun isValidInputData(
         isAllDataValid = false
     }
 
-    if (startTime.value.formatAsTimeInSeconds(startDate.longValue) * 1000 < Calendar.getInstance().timeInMillis) {
+    if (startTime.value.formatAsTimeInMillis(startDate.longValue) < Calendar.getInstance().timeInMillis) {
         Toast.makeText(
             context,
             context.getString(R.string.start_time_must_be_in_the_future),
@@ -584,7 +583,7 @@ fun DatePickerSection(startDate: MutableState<Long>) {
         initialSelectedDateMillis = currentTime.timeInMillis,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis >= currentTime.timeInMillis.minus(1000 * 60 * 60 * 24)
+                return utcTimeMillis >= currentTime.timeInMillis
             }
         }
     )
