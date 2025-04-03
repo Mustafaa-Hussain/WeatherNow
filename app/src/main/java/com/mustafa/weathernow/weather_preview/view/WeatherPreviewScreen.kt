@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -61,7 +62,6 @@ import com.mustafa.weathernow.data.weather.pojos.Current
 import com.mustafa.weathernow.data.weather.pojos.DailyItem
 import com.mustafa.weathernow.data.weather.pojos.HourlyItem
 import com.mustafa.weathernow.data.weather.pojos.OneResponse
-import com.mustafa.weathernow.home.view_model.HomeViewModel
 import com.mustafa.weathernow.home.view_model.ResponseState
 import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.WeatherImage
@@ -69,6 +69,8 @@ import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.getWeatherIconRes
+import com.mustafa.weathernow.utils.internit_connectivity.ConnectivityObserver
+import com.mustafa.weathernow.utils.internit_connectivity.NetworkConnectivityObserver
 import com.mustafa.weathernow.utils.timeFormater
 import com.mustafa.weathernow.weather_preview.view_model.WeatherPreviewViewModel
 import java.util.Locale
@@ -77,13 +79,69 @@ import java.util.Locale
 private var tempUnit = ""
 private var windSpeedUnit = ""
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherPreviewScreen(
     viewModel: WeatherPreviewViewModel,
     longitude: Double,
-    latitude: Double
+    latitude: Double,
+    connectivityObserver: ConnectivityObserver = NetworkConnectivityObserver(LocalContext.current)
 ) {
+    val networkState = connectivityObserver.observe().collectAsStateWithLifecycle(
+        ConnectivityObserver.Status.UnAvailable
+    )
+
+    var lostInternetConnection by rememberSaveable { mutableStateOf(false) }
+    var displayData by rememberSaveable { mutableStateOf(false) }
+
+    if (displayData) {
+        DisplayData(
+            viewModel,
+            longitude,
+            latitude,
+            lostInternetConnection
+        )
+    }
+
+    when (networkState.value) {
+        ConnectivityObserver.Status.Available -> {
+            //display data
+            lostInternetConnection = false
+            displayData = true
+        }
+
+        ConnectivityObserver.Status.Loosing,
+        ConnectivityObserver.Status.Lost -> {
+            //show you lost internet connection message
+            lostInternetConnection = true
+        }
+
+        ConnectivityObserver.Status.UnAvailable -> {
+            //show no internet connectivity
+            displayData = false
+            NoInternetConnectivity()
+        }
+    }
+}
+
+@Composable
+fun NoInternetConnectivity() {
+    Box(
+        Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = stringResource(R.string.no_internet_connectivity))
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DisplayData(
+    viewModel: WeatherPreviewViewModel,
+    longitude: Double,
+    latitude: Double,
+    lostInternetConnection: Boolean
+) {
+
     val weatherData by viewModel.weatherResponse.collectAsStateWithLifecycle()
     var isRefreshing by rememberSaveable { mutableStateOf(true) }
     var getData by rememberSaveable { mutableStateOf(true) }
@@ -133,6 +191,9 @@ fun WeatherPreviewScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (lostInternetConnection) {
+                Text(text = stringResource(R.string.no_internet_connectivity))
+            }
             when (weatherData) {
                 is ResponseState.Failure -> {
                     isRefreshing = false
