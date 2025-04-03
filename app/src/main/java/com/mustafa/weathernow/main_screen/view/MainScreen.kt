@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mustafa.weathernow.R
 import com.mustafa.weathernow.aleart.view.WeatherAlertsScreen
+import com.mustafa.weathernow.aleart.view_model.WeatherAlertsViewModel
 import com.mustafa.weathernow.favorites.view.FavoritesScreen
 import com.mustafa.weathernow.home.view.HomeScreen
 import com.mustafa.weathernow.home.view_model.HomeViewModel
@@ -29,6 +30,7 @@ import com.mustafa.weathernow.data.location.sources.local.LocationDatabase
 import com.mustafa.weathernow.data.location.sources.local.LocationLocalDatasource
 import com.mustafa.weathernow.data.location.sources.remote.LocationRemoteDataSource
 import com.mustafa.weathernow.data.location.sources.remote.LocationRetrofitHelper
+import com.mustafa.weathernow.data.location.sources.shared_prefs.LocationSharedPrefs
 import com.mustafa.weathernow.data.settings.repo.SettingsRepository
 import com.mustafa.weathernow.data.settings.shared_prefs.SettingsLocalDatasource
 import com.mustafa.weathernow.data.weather.repos.WeatherRepository
@@ -116,7 +118,20 @@ fun BottomNavGraph(
             )
         }
         composable<NavigationRoute.WeatherAlertScreen> {
-            WeatherAlertsScreen()
+            val factory = WeatherAlertsViewModel.WeatherAlertsViewModelFactory(
+                LocationRepository.getInstance(
+                    LocationRemoteDataSource(LocationRetrofitHelper.retrofitService),
+                    LocationLocalDatasource(
+                        LocationDatabase.getInstance(context = LocalContext.current)
+                            .getLocatingDao()
+                    ),
+                    LocationSharedPrefs(LocalContext.current)
+                )
+            )
+
+            WeatherAlertsScreen(
+                navController, viewModel(factory = factory)
+            )
         }
         composable<NavigationRoute.FavoriteScreen> {
             val factory = FavoriteViewModel.FavoriteViewModelFactory(
@@ -125,7 +140,8 @@ fun BottomNavGraph(
                     LocationLocalDatasource(
                         LocationDatabase.getInstance(context = LocalContext.current)
                             .getLocatingDao()
-                    )
+                    ),
+                    LocationSharedPrefs(LocalContext.current)
                 )
             )
 
@@ -167,7 +183,8 @@ fun BottomNavGraph(
                     LocationLocalDatasource(
                         LocationDatabase.getInstance(context = LocalContext.current)
                             .getLocatingDao()
-                    )
+                    ),
+                    LocationSharedPrefs(LocalContext.current)
                 )
             )
 

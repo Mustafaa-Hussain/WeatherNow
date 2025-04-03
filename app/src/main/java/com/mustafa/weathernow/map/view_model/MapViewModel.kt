@@ -54,8 +54,8 @@ class MapViewModel(
     }
 
 
-    fun saveLocation(point: GeoPoint?, source: String) {
-        if (point == null) return
+    fun saveLocation(point: GeoPoint?, source: String): Boolean {
+        if (point == null) return false
 
         when (source) {
             MapSources.HOME_SCREEN, MapSources.SETTING_SCREEN
@@ -67,6 +67,7 @@ class MapViewModel(
             MapSources.FAVORITE_SCREEN -> saveFavLocation(point.longitude, point.latitude)
             MapSources.WEATHER_ALERT_SCREEN -> saveAlarmLocation(point.longitude, point.latitude)
         }
+        return true
     }
 
     private fun saveMapLocation(longitude: Double, latitude: Double) {
@@ -85,7 +86,10 @@ class MapViewModel(
         }
     }
 
-    private fun saveAlarmLocation(longitude: Double, latitude: Double) {}
+    private fun saveAlarmLocation(longitude: Double, latitude: Double) {
+        //save temp alert location
+        locationRepository.saveTempLocation(longitude, latitude)
+    }
 
     fun searchLocation(query: String) {
         viewModelScope.launch {

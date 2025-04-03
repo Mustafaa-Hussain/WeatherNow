@@ -6,7 +6,7 @@ import android.util.Log
 import java.io.IOException
 
 class GeoCoderHelper(private val context: Context) {
-    fun getCityName(lat: Double?, lon: Double?): String {
+    fun getCityName(lat: Double?, lon: Double?): String? {
         var city = ""
         try {
             city = Geocoder(context).getFromLocation(

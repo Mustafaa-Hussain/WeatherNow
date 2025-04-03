@@ -154,12 +154,34 @@ fun MapScreen(
 
             Button(
                 onClick = {
-                    mapViewModel.saveLocation(currentLocation, sourceScreen)
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.location_saved), Toast.LENGTH_SHORT
-                    ).show()
-                    navController.popBackStack()
+                    GeoCoderHelper(context).getCityName(
+                        currentLocation?.latitude,
+                        currentLocation?.longitude
+                    ).let {
+                        if (it != null && it.isNotEmpty()) {
+                            val result = mapViewModel.saveLocation(currentLocation, sourceScreen)
+
+                            if (result) {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.location_saved), Toast.LENGTH_SHORT
+                                ).show()
+                                navController.popBackStack()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.chose_another_location),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } else {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.incorrect_location),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                 },
                 modifier = Modifier.padding(8.dp)
             ) {
