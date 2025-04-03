@@ -50,6 +50,10 @@ class LocationRepository(
         return localDataSource.deleteAlert(alertLocation)
     }
 
+    override suspend fun deleteAlert(alertLocationId: Int): Int {
+        return localDataSource.deleteAlert(alertLocationId)
+    }
+
     companion object {
         @Volatile
         private var instance: LocationRepository? = null

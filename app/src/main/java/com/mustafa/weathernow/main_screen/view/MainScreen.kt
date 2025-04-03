@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -54,7 +55,9 @@ import com.mustafa.weathernow.weather_preview.view_model.WeatherPreviewViewModel
 fun MainScreen(
     isLocationPermissionGranted: Boolean,
     location: Location?,
-    askForLocationPermission: () -> Unit
+    askForLocationPermission: () -> Unit,
+    notificationLatitude: Double,
+    notificationLongitude: Double
 ) {
     val navController = rememberNavController()
 
@@ -76,6 +79,17 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding),
             askForLocationPermission
         )
+
+        LaunchedEffect(notificationLatitude, notificationLongitude) {
+            if (notificationLatitude != 0.0 && notificationLongitude != 0.0) {
+                navController.navigate(
+                    NavigationRoute.WeatherPreviewScreen(
+                        notificationLongitude,
+                        notificationLatitude
+                    )
+                )
+            }
+        }
     }
 }
 

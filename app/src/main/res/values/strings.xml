@@ -69,4 +69,5 @@
     <string name="alarm_permission_msg">In order for alarms to work, you need to set alarms. If this permission is not granted, the existing alarms will not work as well.</string>
     <string name="it_is_not_possible_to_set_alarm_in_the_past">It is not possible to set alarm in the past</string>
     <string name="alarm_cancelled">Alarm Cancelled</string>
+    <string name="click_to_show_weather_condition">Click to show weather condition</string>
 </resources>

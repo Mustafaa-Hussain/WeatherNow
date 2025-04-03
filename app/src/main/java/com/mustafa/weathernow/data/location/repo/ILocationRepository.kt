@@ -18,4 +18,6 @@ interface ILocationRepository {
     fun getAlerts(): Flow<List<AlertLocation>>
     suspend fun insertAlert(alertLocation: AlertLocation): Long
     suspend fun deleteAlert(alertLocation: AlertLocation): Int
+
+    suspend fun deleteAlert(alertLocationId: Int): Int
 }

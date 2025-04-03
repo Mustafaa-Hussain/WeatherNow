@@ -30,4 +30,7 @@ interface LocatingDao {
 
     @Delete
     suspend fun deleteAlert(alertLocation: AlertLocation): Int
+
+    @Query("delete from alerts where id = :alertLocationId")
+    suspend fun deleteAlert(alertLocationId: Int): Int
 }

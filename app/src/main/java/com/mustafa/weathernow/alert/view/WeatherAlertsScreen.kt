@@ -87,9 +87,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.mustafa.weathernow.R
+import com.mustafa.weathernow.alert.recever.AlarmReceiver
 import com.mustafa.weathernow.alert.view_model.WeatherAlertsViewModel
 import com.mustafa.weathernow.data.location.pojo.AlertLocation
 import com.mustafa.weathernow.utils.AlarmBroadcastReceiverConstants.ALARM_ACTION
+import com.mustafa.weathernow.utils.AlarmBroadcastReceiverConstants.ALARM_ID
+import com.mustafa.weathernow.utils.AlarmBroadcastReceiverConstants.LATITUDE
+import com.mustafa.weathernow.utils.AlarmBroadcastReceiverConstants.LONGITUDE
 import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.dateFormater
@@ -147,6 +151,9 @@ fun WeatherAlertsScreen(
                             AlarmReceiver::class.java
                         ).apply {
                             action = ALARM_ACTION
+                            putExtra(ALARM_ID, removedItem?.id?.toInt())
+                            putExtra(LONGITUDE, removedItem?.longitude)
+                            putExtra(LATITUDE, removedItem?.latitude)
                         }
                         val pendingIntent =
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
@@ -374,7 +381,9 @@ fun AddToAlertsFAB(
 
                     val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
                         action = ALARM_ACTION
-                        putExtra("alertId", lastAddedAlertId.value)
+                        putExtra(ALARM_ID, lastAddedAlertId.value)
+                        putExtra(LONGITUDE, it.longitude)
+                        putExtra(LATITUDE, it.latitude)
                     }
                     val pendingIntent =
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
@@ -720,7 +729,7 @@ fun TimePickerSection(startTime: MutableState<Triple<Int, Int, Boolean>>) {
         )
         Text(
             text = startTime.let {
-                if (it.value.first > 0 && it.value.second > 0) {
+                if (it.value.first > 0) {
                     "${it.value.first.formatAsTimeSegment()}:${it.value.second.formatAsTimeSegment()} ${
                         if (it.value.third) stringResource(R.string.pm)
                         else stringResource(R.string.am)
