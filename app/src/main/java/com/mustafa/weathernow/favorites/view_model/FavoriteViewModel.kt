@@ -15,9 +15,10 @@ class FavoriteViewModel(private val repo: ILocationRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            repo.getFavoriteLocations().collect {
-                _favoriteLocations.value = it
-            }
+            repo.getFavoriteLocations()
+                .collect {
+                    _favoriteLocations.value = it
+                }
         }
     }
 

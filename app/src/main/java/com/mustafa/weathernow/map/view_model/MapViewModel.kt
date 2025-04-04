@@ -7,9 +7,8 @@ import com.mustafa.weathernow.data.location.pojo.FavoriteLocation
 import com.mustafa.weathernow.data.location.pojo.LocationItem
 import com.mustafa.weathernow.data.location.repo.ILocationRepository
 import com.mustafa.weathernow.data.settings.repo.ISettingsRepository
-import com.mustafa.weathernow.data.settings.repo.SettingsRepository
-import com.mustafa.weathernow.favorites.view.FavoriteLocations
 import com.mustafa.weathernow.utils.NavigationRoute.MapSources
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -43,7 +42,7 @@ class MapViewModel(
         _longitude.value = settingsRepository.getLongitude().toDouble()
         _latitude.value = settingsRepository.getLatitude().toDouble()
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _searchQuery
                 .debounce(250)
                 .distinctUntilChanged()

@@ -8,6 +8,7 @@ import com.mustafa.weathernow.data.settings.repo.ISettingsRepository
 import com.mustafa.weathernow.data.weather.repos.IWeatherRepository
 import com.mustafa.weathernow.home.view_model.HomeViewModel.Errors.CONNECTION_ERROR
 import com.mustafa.weathernow.home.view_model.ResponseState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -35,7 +36,7 @@ class WeatherPreviewViewModel(
         units: String = settingRepository.getMeasurementSystem(),
         lang: String = settingRepository.getLanguage()
     ) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 weatherRepo.getAllWeatherData(
                     longitude,
