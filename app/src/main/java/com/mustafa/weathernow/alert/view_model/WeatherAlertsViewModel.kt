@@ -15,6 +15,21 @@ class WeatherAlertsViewModel(
     private val _alerts = MutableStateFlow<List<AlertLocation>>(emptyList())
     val alerts = _alerts.asStateFlow()
 
+    private val _deletionState = MutableStateFlow(false)
+    val deletionStatus = _deletionState.asStateFlow()
+
+    private val _saveState = MutableStateFlow(false)
+    val saveStatus = _saveState.asStateFlow()
+
+    private val _undoState = MutableStateFlow(false)
+    val undoStatus = _undoState.asStateFlow()
+
+    fun resetState() {
+        _deletionState.value = false
+        _saveState.value = false
+        _undoState.value = false
+    }
+
     //first latitude
     //second longitude
     private val _tempLocation = MutableStateFlow<Pair<Double, Double>>(Pair(0.0, 0.0))
@@ -35,20 +50,23 @@ class WeatherAlertsViewModel(
 
     fun deleteAlert(alertLocation: AlertLocation) {
         viewModelScope.launch {
-            locationRepository.deleteAlert(alertLocation)
+            val result = locationRepository.deleteAlert(alertLocation)
+            _deletionState.value = result > 0
         }
     }
 
     fun saveAlert(alertLocation: AlertLocation) {
         viewModelScope.launch {
-            locationRepository.insertAlert(alertLocation).toInt()
+            val result = locationRepository.insertAlert(alertLocation)
+            _saveState.value = result > 0
         }
     }
 
     fun undoAlert(alertLocation: AlertLocation?) {
         if (alertLocation != null) {
             viewModelScope.launch {
-                locationRepository.insertAlert(alertLocation)
+                val result = locationRepository.insertAlert(alertLocation)
+                _undoState.value = result > 0
             }
         }
     }

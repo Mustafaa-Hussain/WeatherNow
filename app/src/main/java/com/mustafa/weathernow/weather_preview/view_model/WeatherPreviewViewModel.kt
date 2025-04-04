@@ -7,7 +7,7 @@ import com.mustafa.weathernow.BuildConfig
 import com.mustafa.weathernow.data.settings.repo.ISettingsRepository
 import com.mustafa.weathernow.data.weather.repos.IWeatherRepository
 import com.mustafa.weathernow.home.view_model.HomeViewModel.Errors.CONNECTION_ERROR
-import com.mustafa.weathernow.home.view_model.ResponseState
+import com.mustafa.weathernow.utils.ResponseState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

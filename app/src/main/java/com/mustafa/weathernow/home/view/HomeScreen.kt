@@ -1,6 +1,7 @@
 package com.mustafa.weathernow.home.view
 
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
 import androidx.compose.animation.animateContentSize
@@ -65,7 +66,7 @@ import com.mustafa.weathernow.data.weather.pojos.DailyItem
 import com.mustafa.weathernow.data.weather.pojos.HourlyItem
 import com.mustafa.weathernow.data.weather.pojos.OneResponse
 import com.mustafa.weathernow.home.view_model.HomeViewModel
-import com.mustafa.weathernow.home.view_model.ResponseState
+import com.mustafa.weathernow.utils.ResponseState
 import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.WeatherImage
@@ -266,6 +267,7 @@ fun LocationData(location: String?) {
     }
 }
 
+@SuppressLint("UseCompatLoadingForDrawables")
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun TodayWeatherData(currentData: Current?, context: Context) {

@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
@@ -59,11 +57,9 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableLongState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,8 +72,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -98,10 +92,8 @@ import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.dateFormater
 import com.mustafa.weathernow.utils.dateTimeFormater
-import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.formatAsTimeInMillis
 import com.mustafa.weathernow.utils.formatAsTimeSegment
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -117,18 +109,27 @@ fun WeatherAlertsScreen(
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val alertsDeletionState = weatherAlertsViewModel.deletionStatus.collectAsStateWithLifecycle()
+    val alertsUndoState = weatherAlertsViewModel.undoStatus.collectAsStateWithLifecycle()
+
     var removedItem by remember { mutableStateOf<AlertLocation?>(null) }
+
+    LaunchedEffect(alertsDeletionState.value) {
+        //un-schedule alarm
+    }
+
 
     Box(Modifier.fillMaxSize()) {
         if (alerts.value.isNotEmpty()) {
-            Alerts(alerts.value, {
-                navController.navigate(
-                    NavigationRoute.WeatherPreviewScreen(
-                        it.longitude,
-                        it.latitude
+            Alerts(
+                alerts.value, {
+                    navController.navigate(
+                        NavigationRoute.WeatherPreviewScreen(
+                            it.longitude,
+                            it.latitude
+                        )
                     )
-                )
-            }) { location ->
+                }) { location ->
                 removedItem = location
                 weatherAlertsViewModel.deleteAlert(location)
 
@@ -221,7 +222,11 @@ fun Alerts(
 ) {
     LazyColumn {
         items(items = alert, key = { it.id }) { alert ->
-            AlertItem(alert, onItemClick, onDelete)
+            AlertItem(
+                alert,
+                onItemClick,
+                onDelete
+            )
         }
     }
 }
@@ -331,14 +336,39 @@ fun AddToAlertsFAB(
     weatherAlertsViewModel: WeatherAlertsViewModel,
     modifier: Modifier = Modifier
 ) {
+    val alertsSaveState = weatherAlertsViewModel.saveStatus.collectAsStateWithLifecycle()
+
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     weatherAlertsViewModel.getTempLocation()
     val tempAlertLocation = weatherAlertsViewModel.tempLocation.collectAsStateWithLifecycle()
     val lastAddedAlertId = weatherAlertsViewModel.lastAddedAlertId.collectAsStateWithLifecycle()
+    val lastAddedAlert = rememberSaveable { mutableStateOf<AlertLocation?>(null) }
+
+    LaunchedEffect(alertsSaveState.value) {
+        if (lastAddedAlert.value != null) {
+            if (alertsSaveState.value) {
+                scheduleAlert(
+                    context,
+                    lastAddedAlertId = lastAddedAlertId.value,
+                    alert = lastAddedAlert.value,
+                )
+            } else {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.failed_to_save_location),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            lastAddedAlert.value = null
+            weatherAlertsViewModel.resetState()
+
+            showBottomSheet = false
+            weatherAlertsViewModel.resetTempLocation()
+        }
+    }
 
     FloatingActionButton(
         modifier = modifier.padding(16.dp),
@@ -366,43 +396,41 @@ fun AddToAlertsFAB(
 
                 //save alert location
                 weatherAlertsViewModel.saveAlert(it)
-
-                //schedule alarm
-                scope.launch {
-                    while (lastAddedAlertId.value == -1) delay(100)
-
-                    val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
-                        action = ALARM_ACTION
-                        putExtra(ALARM_ID, lastAddedAlertId.value)
-                        putExtra(LONGITUDE, it.longitude)
-                        putExtra(LATITUDE, it.latitude)
-                    }
-                    val pendingIntent =
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
-                            PendingIntent.getBroadcast(
-                                context,
-                                lastAddedAlertId.value,
-                                alarmIntent,
-                                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
-                            )
-                        } else { // Below Android 12
-                            PendingIntent.getBroadcast(
-                                context,
-                                lastAddedAlertId.value,
-                                alarmIntent,
-                                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                            )
-                        }
-
-                    // pass calender trigger alarm time
-                    context.setExactAlarm(it.startTime * 1000, pendingIntent)
-
-                }
-                showBottomSheet = false
-                weatherAlertsViewModel.resetTempLocation()
+                lastAddedAlert.value = it
             }
         }
     }
+}
+
+fun scheduleAlert(context: Context, lastAddedAlertId: Int, alert: AlertLocation?) {
+    if (alert == null) return
+
+    val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
+        action = ALARM_ACTION
+        putExtra(ALARM_ID, lastAddedAlertId)
+        putExtra(LONGITUDE, alert.longitude)
+        putExtra(LATITUDE, alert.latitude)
+    }
+    val pendingIntent =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
+            PendingIntent.getBroadcast(
+                context,
+                lastAddedAlertId,
+                alarmIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
+        } else { // Below Android 12
+            PendingIntent.getBroadcast(
+                context,
+                lastAddedAlertId,
+                alarmIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+    // pass calender trigger alarm time
+    context.setExactAlarm(alert.startTime * 1000, pendingIntent)
+
 }
 
 fun Context.setExactAlarm(

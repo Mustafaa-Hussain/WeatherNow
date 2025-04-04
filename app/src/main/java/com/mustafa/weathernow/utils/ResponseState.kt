@@ -1,4 +1,4 @@
-package com.mustafa.weathernow.home.view_model
+package com.mustafa.weathernow.utils
 
 import com.mustafa.weathernow.data.weather.pojos.OneResponse
 
