@@ -110,7 +110,6 @@ fun WeatherAlertsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val alertsDeletionState = weatherAlertsViewModel.deletionStatus.collectAsStateWithLifecycle()
-    val alertsUndoState = weatherAlertsViewModel.undoStatus.collectAsStateWithLifecycle()
 
     var removedItem by remember { mutableStateOf<AlertLocation?>(null) }
 
@@ -174,13 +173,13 @@ fun WeatherAlertsScreen(
                             }
 
                         if (context.getAlarmManager() != null) {
-                            context.getAlarmManager()?.cancel(pendingIntent);
+                            context.getAlarmManager()?.cancel(pendingIntent)
                             Toast.makeText(
                                 context,
                                 context.getString(R.string.alarm_cancelled)
                                         + " ${removedItem?.id?.toInt() ?: -1}",
                                 Toast.LENGTH_SHORT
-                            ).show();
+                            ).show()
                         }
                     }
                 }
@@ -297,7 +296,7 @@ fun AlertItem(
                                 alert.longitude
                             ) ?: "",
                     )
-                    Text(text = (alert.startTime/1000).dateTimeFormater())
+                    Text(text = alert.startTime.dateTimeFormater())
                 }
                 Icon(
                     modifier = Modifier.weight(1f),
@@ -514,7 +513,7 @@ fun BottomSheetContent(
                         AlertLocation(
                             latitude = tempAlertLocation.first,
                             longitude = tempAlertLocation.second,
-                            startTime = startTime.value.formatAsTimeInMillis(startDate.longValue),
+                            startTime = startTime.value.formatAsTimeInMillis(startDate.longValue) / 1000,
                             alertType = alertOptions[radioOptions.indexOf(selectedOption)],
                         )
                     )
@@ -564,6 +563,24 @@ private fun isValidInputData(
         ).show()
         isAllDataValid = false
     }
+
+    val todayTimeMillis = Calendar.getInstance().apply {
+        timeInMillis = System.currentTimeMillis()
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+    if (startDate.longValue < todayTimeMillis.timeInMillis) {
+        Toast.makeText(
+            context,
+            context.getString(R.string.start_time_must_be_in_the_future),
+            Toast.LENGTH_SHORT
+        ).show()
+        isAllDataValid = false
+    }
+
     return isAllDataValid
 }
 
@@ -617,8 +634,16 @@ fun DatePickerSection(startDate: MutableState<Long>) {
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = currentTime.timeInMillis,
         selectableDates = object : SelectableDates {
+            val tempCurrentTime = Calendar.getInstance().apply {
+                timeInMillis = System.currentTimeMillis()
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis >= currentTime.timeInMillis
+                return utcTimeMillis >= tempCurrentTime.timeInMillis
             }
         }
     )
@@ -695,7 +720,7 @@ fun TimePickerSection(startTime: MutableState<Triple<Int, Int, Boolean>>) {
             modifier = Modifier.padding(end = 8.dp)
         )
         Text(
-            text = if (isTimeSelected) startTime.value.formatAsTimeInMillis(0).timeFormater()
+            text = if (isTimeSelected) (startTime.value.formatAsTimeInMillis() / 1000).timeFormater()
             else stringResource(R.string.start_time)
         )
     }
