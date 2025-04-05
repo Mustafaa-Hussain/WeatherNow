@@ -29,6 +29,7 @@ import com.mustafa.weathernow.data.weather.sources.remote.WeatherRemoteDatasourc
 import com.mustafa.weathernow.main_screen.view.MainActivity
 import com.mustafa.weathernow.utils.AlarmBroadcastReceiverConstants
 import com.mustafa.weathernow.utils.GeoCoderHelper
+import com.mustafa.weathernow.utils.getWeatherIconRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch

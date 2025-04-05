@@ -1,5 +1,6 @@
 package com.mustafa.weathernow.weather_preview.view
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -71,6 +72,7 @@ import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.getWeatherIconRes
 import com.mustafa.weathernow.utils.internit_connectivity.ConnectivityObserver
 import com.mustafa.weathernow.utils.internit_connectivity.NetworkConnectivityObserver
+import com.mustafa.weathernow.utils.internit_connectivity.NoInternetConnectivity
 import com.mustafa.weathernow.utils.timeFormater
 import com.mustafa.weathernow.weather_preview.view_model.WeatherPreviewViewModel
 import java.util.Locale
@@ -120,16 +122,6 @@ fun WeatherPreviewScreen(
             displayData = false
             NoInternetConnectivity()
         }
-    }
-}
-
-@Composable
-fun NoInternetConnectivity() {
-    Box(
-        Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = stringResource(R.string.no_internet_connectivity))
     }
 }
 
