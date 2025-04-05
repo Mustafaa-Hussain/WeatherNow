@@ -4,7 +4,7 @@
 <img src="https://github.com/user-attachments/assets/74960cc3-31b0-4b0a-a6bf-8cf8eb465ef3" align="left" width="100" hspace="10" vspace="10" />
 A native Android mobile application that provides detailed weather updates based on your current location or any chosen city. It supports setting weather alerts, saving favorite locations, and customizing units and languages.
 
-<a href="https://drive.google.com/file/d/19TIE5Sh758MDtwf0QU1kzOfJ9v5n_JX8/view?usp=sharing">APK</a>
+<a href="https://github.com/Mustafaa-Hussain/WeatherNow/releases/download/v1.0/WeatherNow.apk">APK</a>
 
 </div>
 
