@@ -93,7 +93,7 @@ import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.dateFormater
 import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.formatAsTimeInMillis
-import com.mustafa.weathernow.utils.formatAsTimeSegment
+import com.mustafa.weathernow.utils.timeFormater
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -672,6 +672,7 @@ fun TimePickerSection(startTime: MutableState<Triple<Int, Int, Boolean>>) {
         is24Hour = false
     )
     var showTimePicker by rememberSaveable { mutableStateOf(false) }
+    var isTimeSelected by rememberSaveable { mutableStateOf(false) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -695,14 +696,8 @@ fun TimePickerSection(startTime: MutableState<Triple<Int, Int, Boolean>>) {
             modifier = Modifier.padding(end = 8.dp)
         )
         Text(
-            text = startTime.let {
-                if (it.value.first > 0) {
-                    "${it.value.first.formatAsTimeSegment()}:${it.value.second.formatAsTimeSegment()} ${
-                        if (it.value.third) stringResource(R.string.pm)
-                        else stringResource(R.string.am)
-                    }"
-                } else stringResource(R.string.start_time)
-            }
+            text = if (isTimeSelected) startTime.value.formatAsTimeInMillis(0).timeFormater()
+            else stringResource(R.string.start_time)
         )
     }
     if (showTimePicker) {
@@ -710,6 +705,7 @@ fun TimePickerSection(startTime: MutableState<Triple<Int, Int, Boolean>>) {
             startTime.value = Triple(hour, minute, isAfternoon)
             showTimePicker = false
         }
+        isTimeSelected = true
     }
 }
 
@@ -825,7 +821,7 @@ fun StartTimePicker(
                     .padding(top = 16.dp),
                 onClick = {
                     onConfirm(
-                        (timePickerState.hour % 12).let { if (it == 0) 12 else it },
+                        timePickerState.hour,
                         timePickerState.minute,
                         timePickerState.isAfternoon
                     )

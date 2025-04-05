@@ -58,7 +58,7 @@ class WeatherAlertsViewModel(
     fun saveAlert(alertLocation: AlertLocation) {
         viewModelScope.launch {
             val result = locationRepository.insertAlert(alertLocation)
-            _saveState.value = result > 0
+            _saveState.emit(result > 0)
         }
     }
 

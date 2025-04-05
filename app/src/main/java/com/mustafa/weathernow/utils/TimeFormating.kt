@@ -1,7 +1,6 @@
 package com.mustafa.weathernow.utils
 
 import android.text.format.DateFormat
-import java.text.NumberFormat
 import java.util.Calendar
 import java.util.Locale
 
@@ -48,19 +47,11 @@ fun Long?.timeFormater(): String {
     } else ""
 }
 
-
-fun Int?.formatAsTimeSegment(): String {
-    return if (this != null && this > 9)
-        NumberFormat.getInstance().format(this)
-    else
-        "0" + NumberFormat.getInstance().format(this)
-}
-
 fun Triple<Int, Int, Boolean>.formatAsTimeInMillis(date: Long): Long {
-    val hoursOffset = if (this.third) 12 else 0
     val calendar = Calendar.getInstance(Locale.getDefault())
 
-    calendar.set(Calendar.HOUR_OF_DAY, first + hoursOffset)
+    calendar.timeInMillis = date
+    calendar.set(Calendar.HOUR_OF_DAY, first)
     calendar.set(Calendar.MINUTE, second)
     calendar.set(Calendar.SECOND, 0)
     calendar.set(Calendar.MILLISECOND, 0)
