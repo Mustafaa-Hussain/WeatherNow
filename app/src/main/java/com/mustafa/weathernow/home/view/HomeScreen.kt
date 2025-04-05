@@ -74,6 +74,9 @@ import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.dayFormater
 import com.mustafa.weathernow.utils.format
 import com.mustafa.weathernow.utils.getWeatherIconRes
+import com.mustafa.weathernow.utils.internit_connectivity.ConnectivityObserver
+import com.mustafa.weathernow.utils.internit_connectivity.NetworkConnectivityObserver
+import com.mustafa.weathernow.utils.internit_connectivity.NoInternetConnectivity
 import com.mustafa.weathernow.utils.timeFormater
 import java.util.Locale
 
@@ -86,8 +89,14 @@ fun HomeScreen(
     navController: NavController,
     viewModel: HomeViewModel,
     isLocationPermissionGranted: Boolean,
-    location: Location?
+    location: Location?,
+    connectivityObserver: ConnectivityObserver = NetworkConnectivityObserver(LocalContext.current)
 ) {
+    val networkState = connectivityObserver.observe().collectAsStateWithLifecycle(
+        ConnectivityObserver.Status.UnAvailable
+    )
+    var lostInternetConnection by rememberSaveable { mutableStateOf(false) }
+
     val weatherData by viewModel.weatherResponse.collectAsStateWithLifecycle()
     var isRefreshing by rememberSaveable { mutableStateOf(true) }
     var getData by rememberSaveable { mutableStateOf(true) }
@@ -100,6 +109,20 @@ fun HomeScreen(
     val savedLatitude = viewModel.savedLatitude.collectAsStateWithLifecycle()
     val savedLongitude = viewModel.savedLongitude.collectAsStateWithLifecycle()
 
+
+    when (networkState.value) {
+        ConnectivityObserver.Status.Available -> {
+            lostInternetConnection = false
+        }
+
+
+        ConnectivityObserver.Status.UnAvailable,
+        ConnectivityObserver.Status.Loosing,
+        ConnectivityObserver.Status.Lost -> {
+            //show you lost internet connection message
+            lostInternetConnection = true
+        }
+    }
 
     when (measurementSystem.value) {
         "imperial" -> {
@@ -160,6 +183,9 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (lostInternetConnection) {
+                Text(text = stringResource(R.string.no_internet_connectivity))
+            }
             when (weatherData) {
                 is ResponseState.Failure -> {
                     isRefreshing = false
@@ -204,7 +230,7 @@ private fun getWeatherData(
 
 @Composable
 fun ShowErrorMessage(errorMsg: String) {
-    Text(text = errorMsg, fontSize = 24.sp)
+    NoInternetConnectivity()
 }
 
 @Composable
