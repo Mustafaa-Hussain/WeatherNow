@@ -297,7 +297,7 @@ fun AlertItem(
                                 alert.longitude
                             ) ?: "",
                     )
-                    Text(text = alert.startTime.dateTimeFormater())
+                    Text(text = (alert.startTime/1000).dateTimeFormater())
                 }
                 Icon(
                     modifier = Modifier.weight(1f),
@@ -430,7 +430,6 @@ fun scheduleAlert(context: Context, lastAddedAlertId: Int, alert: AlertLocation?
 
     // pass calender trigger alarm time
     context.setExactAlarm(alert.startTime * 1000, pendingIntent)
-
 }
 
 fun Context.setExactAlarm(
@@ -557,7 +556,7 @@ private fun isValidInputData(
         isAllDataValid = false
     }
 
-    if (startTime.value.formatAsTimeInMillis(startDate.longValue) > Calendar.getInstance().timeInMillis) {
+    if (startTime.value.formatAsTimeInMillis(startDate.longValue) < Calendar.getInstance().timeInMillis) {
         Toast.makeText(
             context,
             context.getString(R.string.start_time_must_be_in_the_future),
@@ -619,7 +618,7 @@ fun DatePickerSection(startDate: MutableState<Long>) {
         initialSelectedDateMillis = currentTime.timeInMillis,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis >= currentTime.timeInMillis.minus(1000 * 60 * 60 * 24)
+                return utcTimeMillis >= currentTime.timeInMillis
             }
         }
     )

@@ -55,5 +55,6 @@ fun Triple<Int, Int, Boolean>.formatAsTimeInMillis(date: Long): Long {
     calendar.set(Calendar.MINUTE, second)
     calendar.set(Calendar.SECOND, 0)
     calendar.set(Calendar.MILLISECOND, 0)
-    return calendar.timeInMillis / 1000
+
+    return calendar.timeInMillis
 }
