@@ -47,7 +47,7 @@ fun Long?.timeFormater(): String {
     } else ""
 }
 
-fun Triple<Int, Int, Boolean>.formatAsTimeInMillis(date: Long): Long {
+fun Triple<Int, Int, Boolean>.formatAsTimeInMillis(date: Long = System.currentTimeMillis()): Long {
     val calendar = Calendar.getInstance(Locale.getDefault())
 
     calendar.timeInMillis = date
