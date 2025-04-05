@@ -72,4 +72,6 @@
     <string name="click_to_show_weather_condition">Click to show weather condition</string>
     <string name="no_internet_connectivity">No internet connectivity</string>
     <string name="failed_to_save_location">Failed to save location</string>
+    <string name="snooze">Snooze</string>
+    <string name="clear">Clear</string>
 </resources>
