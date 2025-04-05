@@ -71,4 +71,5 @@
     <string name="alarm_cancelled">تم إلغاء المنبه</string>
     <string name="click_to_show_weather_condition">اضغط لعرض حالة الطقس</string>
     <string name="no_internet_connectivity">لا يوجد اتصال بالإنترنت</string>
+    <string name="failed_to_save_location">فشل في حفظ الموقع</string>
 </resources>

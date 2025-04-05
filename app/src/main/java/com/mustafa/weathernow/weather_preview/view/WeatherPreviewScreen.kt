@@ -62,7 +62,7 @@ import com.mustafa.weathernow.data.weather.pojos.Current
 import com.mustafa.weathernow.data.weather.pojos.DailyItem
 import com.mustafa.weathernow.data.weather.pojos.HourlyItem
 import com.mustafa.weathernow.data.weather.pojos.OneResponse
-import com.mustafa.weathernow.home.view_model.ResponseState
+import com.mustafa.weathernow.utils.ResponseState
 import com.mustafa.weathernow.utils.GeoCoderHelper
 import com.mustafa.weathernow.utils.WeatherImage
 import com.mustafa.weathernow.utils.dateTimeFormater

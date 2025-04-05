@@ -93,8 +93,7 @@ import com.mustafa.weathernow.utils.NavigationRoute
 import com.mustafa.weathernow.utils.dateFormater
 import com.mustafa.weathernow.utils.dateTimeFormater
 import com.mustafa.weathernow.utils.formatAsTimeInMillis
-import com.mustafa.weathernow.utils.formatAsTimeSegment
-import kotlinx.coroutines.delay
+import com.mustafa.weathernow.utils.timeFormater
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -110,18 +109,27 @@ fun WeatherAlertsScreen(
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val alertsDeletionState = weatherAlertsViewModel.deletionStatus.collectAsStateWithLifecycle()
+    val alertsUndoState = weatherAlertsViewModel.undoStatus.collectAsStateWithLifecycle()
+
     var removedItem by remember { mutableStateOf<AlertLocation?>(null) }
+
+    LaunchedEffect(alertsDeletionState.value) {
+        //un-schedule alarm
+    }
+
 
     Box(Modifier.fillMaxSize()) {
         if (alerts.value.isNotEmpty()) {
-            Alerts(alerts.value, {
-                navController.navigate(
-                    NavigationRoute.WeatherPreviewScreen(
-                        it.longitude,
-                        it.latitude
+            Alerts(
+                alerts.value, {
+                    navController.navigate(
+                        NavigationRoute.WeatherPreviewScreen(
+                            it.longitude,
+                            it.latitude
+                        )
                     )
-                )
-            }) { location ->
+                }) { location ->
                 removedItem = location
                 weatherAlertsViewModel.deleteAlert(location)
 
@@ -214,7 +222,11 @@ fun Alerts(
 ) {
     LazyColumn {
         items(items = alert, key = { it.id }) { alert ->
-            AlertItem(alert, onItemClick, onDelete)
+            AlertItem(
+                alert,
+                onItemClick,
+                onDelete
+            )
         }
     }
 }
@@ -324,14 +336,39 @@ fun AddToAlertsFAB(
     weatherAlertsViewModel: WeatherAlertsViewModel,
     modifier: Modifier = Modifier
 ) {
+    val alertsSaveState = weatherAlertsViewModel.saveStatus.collectAsStateWithLifecycle()
+
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     weatherAlertsViewModel.getTempLocation()
     val tempAlertLocation = weatherAlertsViewModel.tempLocation.collectAsStateWithLifecycle()
     val lastAddedAlertId = weatherAlertsViewModel.lastAddedAlertId.collectAsStateWithLifecycle()
+    val lastAddedAlert = rememberSaveable { mutableStateOf<AlertLocation?>(null) }
+
+    LaunchedEffect(alertsSaveState.value) {
+        if (lastAddedAlert.value != null) {
+            if (alertsSaveState.value) {
+                scheduleAlert(
+                    context,
+                    lastAddedAlertId = lastAddedAlertId.value,
+                    alert = lastAddedAlert.value,
+                )
+            } else {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.failed_to_save_location),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            lastAddedAlert.value = null
+            weatherAlertsViewModel.resetState()
+
+            showBottomSheet = false
+            weatherAlertsViewModel.resetTempLocation()
+        }
+    }
 
     FloatingActionButton(
         modifier = modifier.padding(16.dp),
@@ -359,42 +396,40 @@ fun AddToAlertsFAB(
 
                 //save alert location
                 weatherAlertsViewModel.saveAlert(it)
-
-                //schedule alarm
-                scope.launch {
-                    while (lastAddedAlertId.value == -1) delay(100)
-
-                    val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
-                        action = ALARM_ACTION
-                        putExtra(ALARM_ID, lastAddedAlertId.value)
-                        putExtra(LONGITUDE, it.longitude)
-                        putExtra(LATITUDE, it.latitude)
-                    }
-                    val pendingIntent =
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
-                            PendingIntent.getBroadcast(
-                                context,
-                                lastAddedAlertId.value,
-                                alarmIntent,
-                                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
-                            )
-                        } else { // Below Android 12
-                            PendingIntent.getBroadcast(
-                                context,
-                                lastAddedAlertId.value,
-                                alarmIntent,
-                                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                            )
-                        }
-
-                    // pass calender trigger alarm time
-                    context.setExactAlarm(it.startTime, pendingIntent)
-                }
-                showBottomSheet = false
-                weatherAlertsViewModel.resetTempLocation()
+                lastAddedAlert.value = it
             }
         }
     }
+}
+
+fun scheduleAlert(context: Context, lastAddedAlertId: Int, alert: AlertLocation?) {
+    if (alert == null) return
+
+    val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
+        action = ALARM_ACTION
+        putExtra(ALARM_ID, lastAddedAlertId)
+        putExtra(LONGITUDE, alert.longitude)
+        putExtra(LATITUDE, alert.latitude)
+    }
+    val pendingIntent =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
+            PendingIntent.getBroadcast(
+                context,
+                lastAddedAlertId,
+                alarmIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
+        } else { // Below Android 12
+            PendingIntent.getBroadcast(
+                context,
+                lastAddedAlertId,
+                alarmIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+    // pass calender trigger alarm time
+    context.setExactAlarm(alert.startTime * 1000, pendingIntent)
 }
 
 fun Context.setExactAlarm(
@@ -636,6 +671,7 @@ fun TimePickerSection(startTime: MutableState<Triple<Int, Int, Boolean>>) {
         is24Hour = false
     )
     var showTimePicker by rememberSaveable { mutableStateOf(false) }
+    var isTimeSelected by rememberSaveable { mutableStateOf(false) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -659,14 +695,8 @@ fun TimePickerSection(startTime: MutableState<Triple<Int, Int, Boolean>>) {
             modifier = Modifier.padding(end = 8.dp)
         )
         Text(
-            text = startTime.let {
-                if (it.value.first > 0) {
-                    "${it.value.first.formatAsTimeSegment()}:${it.value.second.formatAsTimeSegment()} ${
-                        if (it.value.third) stringResource(R.string.pm)
-                        else stringResource(R.string.am)
-                    }"
-                } else stringResource(R.string.start_time)
-            }
+            text = if (isTimeSelected) startTime.value.formatAsTimeInMillis(0).timeFormater()
+            else stringResource(R.string.start_time)
         )
     }
     if (showTimePicker) {
@@ -674,6 +704,7 @@ fun TimePickerSection(startTime: MutableState<Triple<Int, Int, Boolean>>) {
             startTime.value = Triple(hour, minute, isAfternoon)
             showTimePicker = false
         }
+        isTimeSelected = true
     }
 }
 
@@ -789,7 +820,7 @@ fun StartTimePicker(
                     .padding(top = 16.dp),
                 onClick = {
                     onConfirm(
-                        (timePickerState.hour % 12).let { if (it == 0) 12 else it },
+                        timePickerState.hour,
                         timePickerState.minute,
                         timePickerState.isAfternoon
                     )

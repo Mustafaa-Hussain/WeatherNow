@@ -7,6 +7,8 @@ import com.mustafa.weathernow.BuildConfig
 import com.mustafa.weathernow.data.settings.repo.ISettingsRepository
 import com.mustafa.weathernow.data.weather.repos.IWeatherRepository
 import com.mustafa.weathernow.data.weather.repos.WeatherRepository
+import com.mustafa.weathernow.utils.ResponseState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -43,7 +45,7 @@ class HomeViewModel(
         units: String = settingRepository.getMeasurementSystem(),
         lang: String = settingRepository.getLanguage()
     ) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 weatherRepo.getAllWeatherData(
                     longitude,
