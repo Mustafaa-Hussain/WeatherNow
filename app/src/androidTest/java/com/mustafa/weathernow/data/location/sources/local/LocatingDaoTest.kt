@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import com.mustafa.weathernow.data.location.pojo.FavoriteLocation
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
@@ -48,8 +49,6 @@ class LocatingDaoTest {
 
         val result = dao.insertFavoriteLocation(favLocation)
         val favoriteLocations = dao.getAllFavoriteLocations()
-            .take(1)
-            .toList()
             .first()
 
         assertTrue(result > 0)
