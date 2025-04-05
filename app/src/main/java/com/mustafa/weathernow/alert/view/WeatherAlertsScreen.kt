@@ -110,7 +110,6 @@ fun WeatherAlertsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val alertsDeletionState = weatherAlertsViewModel.deletionStatus.collectAsStateWithLifecycle()
-    val alertsUndoState = weatherAlertsViewModel.undoStatus.collectAsStateWithLifecycle()
 
     var removedItem by remember { mutableStateOf<AlertLocation?>(null) }
 
@@ -174,13 +173,13 @@ fun WeatherAlertsScreen(
                             }
 
                         if (context.getAlarmManager() != null) {
-                            context.getAlarmManager()?.cancel(pendingIntent);
+                            context.getAlarmManager()?.cancel(pendingIntent)
                             Toast.makeText(
                                 context,
                                 context.getString(R.string.alarm_cancelled)
                                         + " ${removedItem?.id?.toInt() ?: -1}",
                                 Toast.LENGTH_SHORT
-                            ).show();
+                            ).show()
                         }
                     }
                 }
